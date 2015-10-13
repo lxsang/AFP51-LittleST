@@ -75,7 +75,7 @@ var methodsb_config = {
 			}
 			console.log(m);
 		}
-		code = code.replace(/\'/g,"''");
+		//code = code.replace(/\'/g,"''");
 		if(w2ui.method_sidebar.find({id:m}).length == 0)
 		{
 			$.post( "/ffvm/new_method", { 

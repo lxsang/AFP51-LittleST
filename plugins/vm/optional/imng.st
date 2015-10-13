@@ -16,8 +16,8 @@ Methods ImageManager 'all'
 		^ '[', ((aClass methods keys inject:'' into:[:x :y|
 			x,'"',y,'"',',']) back),']'
 |		
-	addMethodTo:class source:text |m|
-		m <- Method new; text:text.
+	addMethodTo:class  |m|
+		m <- Method new; text:sysTmp.
 		(m compileWithClass: class) ifTrue:[
 			class methods at:m name put:m.
 			^'{"result":1}'
@@ -25,9 +25,9 @@ Methods ImageManager 'all'
 			^'{"result":0}'
 		]
 |
-	editMethod:name of:class source:text |m|
+	editMethod:name of:class  |m|
 		m <- class methodNamed:name.
-		m text:text.
+		m text:sysTmp.
 		(m compileWithClass: class) ifTrue:[
 			^'{"result":1}'
 		] ifFalse:[

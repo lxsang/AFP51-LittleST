@@ -1,9 +1,3 @@
-/*
-	Little Smalltalk, version 3
-	Main Driver
-	written By Tim Budd, September 1988
-	Oregon State University
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +20,7 @@ char *text;
     method = newMethod();
     incr(method);
     setInstanceVariables(nilobj);
-    printf("parse %s\n", text);
+    // printf("parse %s\n", text);
     ignore parse(method, text, false);
 
     process = allocObject(processSize);
@@ -81,6 +75,7 @@ void init()
 		files <- Array new: 15. \
 		stderr <- File new; name: 'stderr'; mode: 'w'; open. \
 		editor <- 'nano'. \
+        sysTmp <- ''. \
 		scheduler <- Scheduler new.\
 		classes <- Dictionary new. \
 		symbols binaryDo: [:x :y |  \
@@ -88,6 +83,17 @@ void init()
 				ifTrue: [ classes at: x put: y ] ]. \
     	imgMeta <- ImageManager new.");
     printf("Finish load image\n");
+}
+void create_tmp_str(const char* code)
+{
+        object str;
+        
+        str = newStString(code);
+        decr(globalSymbol("sysTmp"));
+        //assign symbol to value
+        nameTableInsert(symbols, strHash("sysTmp"),
+                        globalKey("sysTmp"), str);
+        // printf("result %s\n", load_string(str));
 }
 char* load_string(object objptr)
 {
@@ -166,8 +172,10 @@ void new_method(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-		char* code = __s("x ^(imgMeta addMethodTo:%s source:'%s')",
-					dvalue(rq,"class"),dvalue(rq,"code"));
+		char* code = dvalue(rq,"code");
+        create_tmp_str(code);
+        // create the method
+        code = __s("x ^(imgMeta addMethodTo:%s)",dvalue(rq,"class"));
 		__t(client,"%s",result_string_of(code));
 		return;
 	}
@@ -212,8 +220,11 @@ void update_method(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-		char* code = __s("x ^(imgMeta editMethod:#%s of:%s source:'%s')",
-					dvalue(rq,"method"),dvalue(rq,"class"),dvalue(rq,"code"));
+        char* code = dvalue(rq,"code");
+        create_tmp_str(code);
+        // now execute the code
+		code = __s("x ^(imgMeta editMethod:#%s of:%s)",
+                         dvalue(rq,"method"),dvalue(rq,"class"));
 		__t(client,"%s",result_string_of(code));
 		return;
 	}
