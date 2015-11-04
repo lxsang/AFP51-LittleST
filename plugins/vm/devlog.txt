@@ -1,6 +1,0 @@
-
-TO FIX
-	crash when compile error
-	extern allocation size : allocation bigger than permitted
-	#define FREELISTMAX 2000 -> 4000
-	extern string buffer size
