@@ -1,3 +1,5 @@
+#ifndef NAMES_H
+#define NAMES_H
 /*
 	Little Smalltalk, version 2
 	Written by Tim Budd, Oregon State University, July 1987
@@ -69,3 +71,4 @@ extern object globalKey(STR);
 extern object nameTableLookup(OBJ X STR);
 
 #define globalSymbol(s) nameTableLookup(symbols, s)
+#endif

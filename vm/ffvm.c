@@ -1,39 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <errno.h>
 #include "plugin.h"
 
 #include "source/env.h"
 #include "source/memory.h"
 #include "source/names.h"
 
+pthread_mutex_t exec_mux;
+
 int initial = 0;		/* not making initial image */
 void init();
 call __init__ = init;
 boolean vm_execute(object aProcess, int maxsteps);
 
-object goDoIt(text)
-char *text;
+object create_process(const char* code)
 {
-    object process, stack, method, scheduler, processClass;
-
+    object process, stack, method, processClass;
     method = newMethod();
-    incr(method);
     setInstanceVariables(nilobj);
-    // printf("parse %s\n", text);
-    ignore parse(method, text, false);
-
+    ignore parse(method, code, false);
+	/*must check if the parse method success or not to
+	continue the execution, this will avoid the segment
+	fault error*/
     process = allocObject(processSize);
-    //incr(process);
     stack = allocObject(50);
-    //dump_object_header(stack);
-    //incr(stack);
-    scheduler = globalSymbol("scheduler");
+	setClass(stack, globalSymbol("Array"));
+	// find the sheduler
     processClass = globalSymbol("Process");
     setClass(process,processClass);
-    if(scheduler != nilobj)
-    	basicAtPut(scheduler,3,process);
-    /* make a process */
     basicAtPut(process, stackInProcess, stack);
     basicAtPut(process, stackTopInProcess, newInteger(10));
     basicAtPut(process, linkPtrInProcess, newInteger(2));
@@ -46,43 +43,69 @@ char *text;
     basicAtPut(stack, 4, newInteger(1));	/* return point */
     basicAtPut(stack, 5, method);	/* method */
     basicAtPut(stack, 6, newInteger(1));	/* byte offset */
-    //printf("%d\n", getClass(process));
+	return process;
+}
+object schedulerRun (char* text)
+{
+    object process, scheduler;
+	process = create_process(text);
+	scheduler = globalSymbol("scheduler");
+    if(scheduler != nilobj)
+	{
+		// create new Link Object
+		object lk = newLink(nilobj,process);
+		// get the set object from scheduler
+		object set = basicAt(scheduler,2);
+		object lks = basicAt(set,1);
+		// insert the process to the processList
+		basicAtPut(lk, 3, lks);
+		basicAtPut(set,1, lk);
+		basicAtPut(scheduler,3,process);
+	}
+	object wprocess = globalSymbol("webProcess");
+	object stack = basicAt(wprocess, stackInProcess);
     /* now go execute it */
-    while (vm_execute(process, 15000))
-	fprintf(stderr, "..");
+	// run the scheduler, not the process which will run all the
+	// process in its processlist
+    while (vm_execute(wprocess, 5000));
+	//fprintf(stderr, "..");
+}
+object goDoIt(const char* code)
+{
+	object process = create_process(code);
+	while (vm_execute(process, 5000));
 	return basicAt(basicAt(process, stackInProcess),1);
 }
-
 void init()
 {
 	FILE *fp; 
-	char* path = __s("%s/%s",__plugin__.pdir,"image");
+	char* path = __s("%s/%s",__plugin__.pdir,"image.im");
     fp = fopen(path,"r");
     
 	if (fp == NULL) {
 		printf("Cannot load image : %s\n", path);
 		return;
     }
-     initMemoryManager();
+	pthread_mutex_init(&exec_mux, NULL);
+    initMemoryManager();
     imageRead(fp);
     initCommonSymbols();
     //dumpInitialiseImage();
     //stdin <- File new; name: 'stdin'; mode: 'r'; open. \
     // create process and execute it
-    goDoIt("x true <- True new. \
-		false <- False new. \
-		smalltalk <- Smalltalk new. \
-		files <- Array new: 15. \
-		stderr <- File new; name: 'stderr'; mode: 'w'; open. \
-		editor <- 'nano'. \
-        sysTmp <- ''. \
-		scheduler <- Scheduler new.\
-		classes <- Dictionary new. \
-		symbols binaryDo: [:x :y |  \
-			(y class == Class) \
-				ifTrue: [ classes at: x put: y ] ]. \
-    	imgMeta <- ImageManager new.");
-    printf("Finish load image\n");
+	goDoIt("webGlobal \
+			stderr <- File new; name: 'stdout'; mode: 'w'; open. \
+			stdout <- File new; name: 'stdout'; mode: 'w'; open. \
+        	sysTmp <- ''. \
+			scheduler <- Scheduler new.\
+    		imgMeta <- ImageManager new.\
+			bBlock <- [webProcess <- bBlock newProcess. scheduler runOne]. \
+			webProcess <- bBlock newProcess.");
+    LOG("%s","Finish load image\n");
+}
+void pexit()
+{
+	pthread_mutex_destroy(&exec_mux);
 }
 void create_tmp_str(const char* code)
 {
@@ -153,11 +176,11 @@ void classinfo(int client,const char* method,dictionary rq)
 		char* variables;
 		
 		char* code = __s("x ^(imgMeta allMethodsOf:%s)",
-						dvalue(rq,"class"));
+						R_STR(rq,"class"));
 		methods = result_string_of(code);
 		
 		code = __s("x ^(imgMeta variablesOf:%s)",
-				dvalue(rq,"class"));
+				R_STR(rq,"class"));
 		variables = result_string_of(code);
 		
 		__t(client,"[%s,%s]", methods,variables);
@@ -172,10 +195,10 @@ void new_method(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-		char* code = dvalue(rq,"code");
+		char* code = R_STR(rq,"code");
         create_tmp_str(code);
         // create the method
-        code = __s("x ^(imgMeta addMethodTo:%s)",dvalue(rq,"class"));
+        code = __s("x ^(imgMeta addMethodTo:%s)",R_STR(rq,"class"));
 		__t(client,"%s",result_string_of(code));
 		return;
 	}
@@ -186,32 +209,15 @@ void save_image(int client,const char* method,dictionary rq)
 	json(client);
 	if(IS_POST(method))
 	{
+		char* name = R_STR(rq,"name");
+		if(!name) name = "backup";
 		//printf("%s\n", );
-		char* code = __s("x smalltalk saveImage:'plugins/image'");
+		char* code = __s("x smalltalk saveImage:'%s/../plugins/%s'",__plugin__.htdocs, name);
 		ignore goDoIt(code);
 		__t(client,"{\"result\":1}");
 		return;
 	}
 	__t(client,"{}");
-}
-void run_on_ws(int client,const char* method,dictionary rq)
-{ 
-	json(client);
-	if(IS_POST(method))
-	{
-		//printf("%s\n", );
-		char* code = __s("x  stdout <- File new; name: 'tmp/ffvm_log.log'; mode: 'w'; open.[%s] value print.stdout close",dvalue(rq,"code"));
-		printf("Qery %s\n",code );
-		ignore goDoIt(code);
-		__t(client,"{\"result\":1}");
-		return;
-	}
-	__t(client,"{}");
-}
-void ws_log(int client,const char* method,dictionary rq)
-{ 
-	html(client);
-	__f(client,__s("%s/../tmp/ffvm_log.log",__plugin__.htdocs));
 }
 
 void update_method(int client,const char* method,dictionary rq)
@@ -220,11 +226,11 @@ void update_method(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-        char* code = dvalue(rq,"code");
+        char* code = R_STR(rq,"code");
         create_tmp_str(code);
         // now execute the code
 		code = __s("x ^(imgMeta editMethod:#%s of:%s)",
-                         dvalue(rq,"method"),dvalue(rq,"class"));
+                         R_STR(rq,"method"),R_STR(rq,"class"));
 		__t(client,"%s",result_string_of(code));
 		return;
 	}
@@ -237,7 +243,7 @@ void methods_of(int client,const char* method,dictionary rq)
 	if(IS_POST(method))
 	{
 		char* code = __s("x ^(imgMeta allMethodsOf:%s)",
-					dvalue(rq,"class"));
+					R_STR(rq,"class"));
 		__t(client,result_string_of(code));
 		return;
 	}
@@ -250,7 +256,7 @@ void variables_of(int client,const char* method,dictionary rq)
 	if(IS_POST(method))
 	{
 		char* code = __s("x ^(imgMeta variablesOf:%s)",
-				dvalue(rq,"class"));
+				R_STR(rq,"class"));
 		__t(client,result_string_of(code));
 		return;
 	}
@@ -261,8 +267,8 @@ void new_class(int client,const char* method,dictionary rq)
 	json(client);
 	if(IS_POST(method))
 	{
-		char* code = __s("x ^(%s)",dvalue(rq,"code"));
-		char* class = dvalue(rq,"class");
+		char* code = __s("x ^(%s)",R_STR(rq,"code"));
+		char* class = R_STR(rq,"class");
 		ignore goDoIt(code);
 		object result = globalSymbol(class);
 		if(result == nilobj) 
@@ -280,9 +286,146 @@ void source(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-		char* code = __s("x ^(imgMeta sourceOf:'%s' in:%s)",dvalue(rq,"method"),dvalue(rq,"class"));
+		char* code = __s("x ^(imgMeta sourceOf:'%s' in:%s)",R_STR(rq,"method"),R_STR(rq,"class"));
 		__t(client,result_string_of(code));
 		return;
 	}
 	__t(client,"");
+}
+void exp_class(int client, const char* method, dictionary rq)
+{
+	if(IS_GET(method))
+	{
+		char* name = R_STR(rq, "name");
+		if(name)
+		{
+			char * file = __s("%s/../tmp/%s.st", __plugin__.htdocs, name);
+			char * code = __s("x ^(imgMeta exportClass:%s to:'%s')",
+							name,file);
+			ignore goDoIt(code);
+			octstream(client,__s("%s.st",name));
+			__f(client, file);
+			return;
+		}
+		html(client);
+		__t(client,"Unknow class name");
+		return;
+	}
+	html(client);
+	__t(client,"Bad request");
+}
+void get_image(int client, const char* method, dictionary rq)
+{
+	char* name = __s("backup_%ul", time(NULL));
+	char * file = __s("%s/../tmp/%s", __plugin__.htdocs, name);
+	char* code = __s("x smalltalk saveImage:'%s'",file);
+	ignore goDoIt(code);
+	octstream(client,"FireflySTImage.im");
+	__fb(client,file);
+}
+void scriptbin(int client, const char* method, dictionary rq)
+{
+	FILE* fp;
+	char* file = __s("%s/scriptbin.json",__plugin__.pdir);
+	json(client);
+	if(IS_POST(method))
+	{
+		char* code = __s(",{\"id\":%d,\"text\":\"%s\"}",time(NULL),R_STR(rq, "code"));
+		if(code)
+		{
+			fp = fopen(file,"a");
+			if(fp)
+			{
+				fwrite(code,1,strlen(code),fp);
+				__t(client,"{\"result\":1,\"msg\":\"OK\"}");
+				fclose(fp);
+				free(code);
+				return;
+			}
+			__t(client,"{\"result\":0,\"msg\":\"Cannot open file to write\"}");
+			free(code);
+			return;
+		}
+		__t(client,"{\"result\":0,\"msg\":\"Bad request\"}");
+	}
+	else
+	{
+		__t(client,"{\"status\": \"success\", \"items\": [");
+		__fb(client,file);
+		__t(client,"]}");
+		free(file);
+	}
+}
+int read_buf(int fd, char*buf,int size)
+{
+	int i = 0;
+	char c = '\0';
+	int n;
+	while ((i < size - 1) && (c != '\n'))
+	{
+		n = read(fd, &c, 1);
+		if (n > 0)
+		{
+			buf[i] = c;
+			i++;
+		}
+		else if(n == -1) return n;
+		else
+			c = '\n';
+	}
+	buf[i] = '\0';
+	return i;
+}
+void webtty(int client, const char* m, dictionary rq)
+{
+	textstream(client);
+	int filedes[2];
+	char* code = R_STR(rq, "code");
+	if(!code) return;
+	char* query = __s("x %s",code);
+	if(pipe(filedes) == -1)
+	{
+		perror("pipe");
+		return;
+	}
+	pid_t pid = fork();
+	if(pid == -1)
+	{
+		perror("folk");
+		return;
+	} else if(pid == 0)
+	{
+	    while ((dup2(filedes[1], STDOUT_FILENO) == -1) && (errno == EINTR)) {}
+	     close(filedes[1]);
+	     close(filedes[0]);
+	    // execute Smalltalk code, and redirect ouput to socket
+		 pthread_mutex_lock (&exec_mux);
+		 ignore schedulerRun(query);
+		 pthread_mutex_unlock (&exec_mux);
+	     //perror("execl");
+	     _exit(1);
+	}
+	close(filedes[1]);
+	char buffer[1024];
+	while (1) {
+		ssize_t count = read_buf(filedes[0],buffer, sizeof(buffer));
+		if (count == -1) {
+			if (errno == EINTR) {
+				continue;
+			} else {
+				perror("read");
+				return;
+			}
+		} else if (count == 0) {
+			break;
+		} else {
+			__t(client,"data:%s\n",buffer);
+			//handle_child_process_output(buffer, count);
+		}
+	}
+	close(filedes[0]);
+	wait(0);
+	free(code);
+	free(query);
+	printf("Child process exit\n");
 }

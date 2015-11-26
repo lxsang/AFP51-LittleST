@@ -12,6 +12,7 @@ var editor_html =
     	+'editor.setTheme("ace/theme/monokai");\n'
    	 	+'editor.getSession().setMode("ace/mode/text");\n'
    	 	+'editor.completers.push(editor_syntax_ac);\n'
+		+ 'editor.getSession().setUseWrapMode(true);\n'
 		+'</script>';
 var top_html = 
 		"<div id = 'custom_top_header'>"
@@ -59,7 +60,8 @@ var config = {
                         { type: 'menu',   id: 'cls_ed', caption: '', icon: ' fa-edit', items: [
                             { id:'new_cls', text: 'New class', icon: 'fa-plus' }, 
                             { text: 'Edit class', icon: 'fa-pencil' }, 
-                            { text: 'Delete class', icon: 'fa-trash' }
+                            { text: 'Delete class', icon: 'fa-trash' },
+							{ id:'exp_cls',text: 'Export class', icon: 'fa-external-link' }
                         ]},
                         { type: 'button',  id: 'clsbr_ref',  caption: '', icon: 'fa-refresh'}
                     ],
@@ -68,8 +70,11 @@ var config = {
                        switch(event.target)
                        {
                        		case 'cls_ed:new_cls':
-                       		sclbrr_config.openClassEditor();
-                       		break;
+                       			sclbrr_config.openClassEditor();
+                       			break;
+							case 'cls_ed:exp_cls':
+								sclbrr_config.exportClass();
+								break;
                        		case 'clsbr_ref':
                        		sclbrr_config.reload();
                        		break;
@@ -185,17 +190,31 @@ var config = {
             }
         ]
 	},
-	save_image()
+	save_image: function()
 	{
-		w2confirm('Do you want to save the current image', function (btn) {
+		wprompt("Please enter the name of backup image",function(fname){
+			if(fname)
+			{
+				w2confirm('Do you want to save the current image', function (btn) {
+					if(btn == "Yes")
+					{
+						$.post( "/ffvm/save_image", {name:fname.trim()})
+		  					.done(function( data ) 
+		  					{
+		  						w2alert("The image is saved");
+		  					});
+						}
+				});
+			}
+		});
+	},
+	img_download: function()
+	{
+		w2confirm('Download the current running image', function (btn) {
 			if(btn == "Yes")
 			{
-				$.post( "/ffvm/save_image", {name:'backup'})
-  					.done(function( data ) 
-  					{
-  						w2alert("The image is saved");
-  					});
-				}
+				window.open("/ffvm/get_image", "_self");
+			}
 		});
 	}
 }
@@ -221,5 +240,8 @@ $(function () {
     	config.save_image();
     	//console.log('open WS');
     });
+	$('#bt_download_image').click(function(){
+		config.img_download();
+	});
 });
 

@@ -26,6 +26,9 @@
 #include <string.h>
 #include "env.h"
 #include "memory.h"
+// include the dictionary library
+
+#include "free_list.h"
 
 void setFreeLists();
 void sysDecr(object z);
@@ -64,8 +67,8 @@ struct objectStruct objectTable[ObjectTableMax];
 	FREELISTMAX defines the maximum size of any object.
 */
 
-#define FREELISTMAX 2000
-static object objectFreeList[FREELISTMAX];	/* free list of objects */
+//#define FREELISTMAX 3000
+//static object objectFreeList[FREELISTMAX];	/* free list of objects */
 
 #ifndef mBlockAlloc
 
@@ -88,8 +91,9 @@ noreturn initMemoryManager()
 #endif
 
     /* set all the free list pointers to zero */
-    for (i = 0; i < FREELISTMAX; i++)
-	objectFreeList[i] = nilobj;
+    for (i = 0; i < MAX_FLIST; i++)
+			FL_SET(i,nilobj);
+	//objectFreeList[i] = nilobj;
 
     /* set all the reference counts to zero */
     for (i = 0; i < ObjectTableMax; i++) {
@@ -99,7 +103,6 @@ noreturn initMemoryManager()
 
     /* make up the initial free lists */
     setFreeLists();
-
 #ifndef mBlockAlloc
     /* force an allocation on first object assignment */
     currentMemoryPosition = MemoryBlockSize + 1;
@@ -116,9 +119,10 @@ void setFreeLists()
     int i, size;
     register int z;
     register struct objectStruct *p;
-
-    objectFreeList[0] = nilobj;
-
+	fl_clear();
+    //objectFreeList[0] = nilobj;
+	FL_SET(0, nilobj);
+	
     for (z = ObjectTableMax - 1; z > 0; z--) {
 	if (objectTable[z].referenceCount == 0) {
 	    /* Unreferenced, so do a sort of sysDecr: */
@@ -126,10 +130,13 @@ void setFreeLists()
 	    size = p->size;
 	    if (size < 0)
 		size = ((-size) + 1) / 2;
-	    p->class = objectFreeList[size];
-	    objectFreeList[size] = z;
+	    //p->class = objectFreeList[size];
+		p->class = FL_GET(size);
+	    FL_SET(size,z);
+		//objectFreeList[size] = z;
 	    for (i = size; i > 0;)
-		p->memory[--i] = nilobj;
+			if(p->memory)
+				p->memory[--i] = nilobj;
 	}
     }
 }
@@ -155,6 +162,7 @@ int memorySize;
 
 	memoryBlock =
 	    (object *) calloc((unsigned) MemoryBlockSize, sizeof(object));
+	//printf("size of object: %d\n", sizeof(object));
 	if (!memoryBlock)
 	    sysError("out of memory", "malloc failed");
 	currentMemoryPosition = 0;
@@ -172,39 +180,76 @@ int memorySize;
     int i;
     register int position;
     boolean done;
-
-    if (memorySize >= FREELISTMAX) {
+	oslot_t np;
+    /*if (memorySize >= FREELISTMAX) {
 	fprintf(stderr, "size %d\n", memorySize);
 	sysError("allocation bigger than permitted", "allocObject");
-    }
+    }*/
 
     /* first try the free lists, this is fastest */
-    if ((position = objectFreeList[memorySize]) != 0) {
-	objectFreeList[memorySize] = objectTable[position].class;
+    //if ((position = objectFreeList[memorySize]) != 0) {
+	if ((position = FL_GET(memorySize)) != 0) {
+		FL_SET(memorySize, objectTable[position].class);
+		//objectFreeList[memorySize] = objectTable[position].class;
     }
 
     /* if not there, next try making a size zero object and
        making it bigger */
-    else if ((position = objectFreeList[0]) != 0) {
-	objectFreeList[0] = objectTable[position].class;
-	objectTable[position].size = memorySize;
-	objectTable[position].memory = mBlockAlloc(memorySize);
+    //else if ((position = objectFreeList[0]) != 0) {
+	else if ((position = FL_GET(0)) != 0) {
+		//objectFreeList[0] = objectTable[position].class;
+		FL_SET(0, objectTable[position].class);
+		objectTable[position].size = memorySize;
+		objectTable[position].memory = mBlockAlloc(memorySize);
     }
 
     else {			/* not found, must work a bit harder */
-	done = false;
+		done = false;
 
-	/* first try making a bigger object smaller */
+		// just loop through the free object, and find a free slot
+		for_each_slot(np)
+		{
+			if((position = np->value) != 0)
+			{
+				//dump_fl();
+				int cursize = objectTable[position].size;
+			    if (cursize < 0)
+					cursize = ((-cursize) + 1) / 2;
+				//printf("%d\n", FL_GET(0));
+				//printf("Found free at: %d object of %d-> %d vs %d, class %d\n",position, np->key, cursize, memorySize,objectTable[position].class);
+				FL_SET(cursize,objectTable[position].class);
+				if(memorySize < cursize)
+				{
+					// if it's a bigger object, trim it
+					objectTable[position].size = memorySize;
+				}
+				else
+				{
+					// if it's smaller, make it bigger
+					printf("Make it bigger\n");
+					objectTable[position].size = memorySize;
+					#ifdef mBlockAlloc
+		    		free(objectTable[position].memory);
+					#endif
+					objectTable[position].memory = mBlockAlloc(memorySize);
+				}
+				done = true;
+				i = MAX_FLIST;// break the second loop :)
+				break; //break the first loop
+			}
+		}
+	/* old code
+	// first try making a bigger object smaller 
 	for (i = memorySize + 1; i < FREELISTMAX; i++)
 	    if ((position = objectFreeList[i]) != 0) {
 		objectFreeList[i] = objectTable[position].class;
-		/* just trim it a bit */
+		// just trim it a bit 
 		objectTable[position].size = memorySize;
 		done = true;
 		break;
 	    }
 
-	/* next try making a smaller object bigger */
+	// next try making a smaller object bigger 
 	if (!done)
 	    for (i = 1; i < memorySize; i++)
 		if ((position = objectFreeList[i]) != 0) {
@@ -217,7 +262,7 @@ int memorySize;
 		    done = true;
 		    break;
 		}
-
+	*/
 	/* if we STILL don't have it then there is nothing */
 	/* more we can do */
 	if (!done)
@@ -293,14 +338,16 @@ void sysDecr(object z)
     size = p->size;
     if (size < 0)
 	size = ((-size) + 1) / 2;
-    p->class = objectFreeList[size];
-    objectFreeList[size] = z >> 1;
+    p->class = FL_GET(size);//objectFreeList[size];
+    //objectFreeList[size] = z >> 1;
+	FL_SET(size,z >> 1);
     if (size > 0) {
-	if (p->size > 0)
-	    for (i = size; i;)
-		decr(p->memory[--i]);
-	for (i = size; i > 0;)
-	    p->memory[--i] = nilobj;
+		if (p->size > 0)
+	    	for (i = size; i;)
+				decr(p->memory[--i]);
+		for (i = size; i > 0;)
+			if(p->memory)
+	    		p->memory[--i] = nilobj;
     }
     p->size = size;
 }

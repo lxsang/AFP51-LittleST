@@ -1,5 +1,6 @@
 
 TO FIX
+	replace object free list by a dictionary, so that an object can have unlimited size (byte array, string, etc.)
 	crash when compile error
 	extern allocation size : allocation bigger than permitted
 	#define FREELISTMAX 2000 -> 4000

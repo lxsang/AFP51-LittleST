@@ -443,6 +443,7 @@ int number;
     /* on overflow, return nil and let smalltalk code */
     /* figure out what to do */
   overflow:
+  	//printf("Over flow occurs\n");
     returnedObject = nilobj;
     return (returnedObject);
 }

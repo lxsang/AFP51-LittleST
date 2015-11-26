@@ -59,7 +59,7 @@ Methods ImageManager 'all'
 	imageKeywords |list  f|
 	    list <- List new.
 	    list add:Object.
-	    f <- File new; name: 'plugins/img.kw';mode: 'w';open.
+	    f <- File new; name: 'img.kw';mode: 'w';open.
 	    f print:('[{"value": "Object", "score": 1000, "meta": "class"}').
 	    self dumpAllSubClassesOf:Object to:list.
 	    self genAllKeywordsOf:list to:f.
@@ -71,9 +71,24 @@ Methods ImageManager 'all'
 	        list add:e.
 	        self dumpAllSubClassesOf:e to:list
 	    ]
-]
-Methods String 'all'
-	back
-		self size = 0 ifTrue:[^self].
-		^ self copyFrom:1 to: (self size - 1)
+|
+
+	exportClass:class to:aFile |tmp f i|
+	    f <- File new;name:aFile;mode:'w';open.
+	    tmp <- 'Class ', (class name asString),' ', 
+	                (class superClass name asString).
+	    class variables isNil ifFalse:[
+	        class variables do:[:e| tmp <- (tmp,' ', e)]].
+	    f print:tmp.
+	    tmp <- 'Methods ', class name asString,' ''all'''.
+	    f print:tmp.
+	    i <- 0.
+	    class methods binaryDo:[:k :v| 
+	        i = 0 ifFalse:[f print:'|'].
+	        i <- i+1.
+	        f print: v text
+	    ].
+	    f print:']'.
+	    f close.
+
 ]

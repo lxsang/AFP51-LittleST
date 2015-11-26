@@ -15,6 +15,7 @@ function gen_editor_for(id,default_val)
 			+ '});'
 	    	+id + '.setTheme("ace/theme/monokai");\n'
 	   	 	+id + '.getSession().setMode("ace/mode/text");\n'
+			+id + '.getSession().setUseWrapMode(true);\n'
 			+'</script>'
 }
 	
@@ -111,6 +112,17 @@ var sclbrr_config = {
   				}
   			});
 		
+	},
+	exportClass:function()
+	{
+		var cls = w2ui.cls_sidebar.selected;
+		if(!cls) 
+			w2alert('No class selected');
+		else
+		{
+			//$("dl_frame").src =  window.location.href + 
+			window.open("/ffvm/exp_class?name=" + cls, "_self");
+		}
 	}
 }
 function remove_all_nodes_of(sidebar)

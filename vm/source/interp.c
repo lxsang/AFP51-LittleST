@@ -272,7 +272,6 @@ int maxsteps;
 
 	case SendMessage:
 	    messageToSend = literalsAt(low);
-
 	  doSendMessage:
 	    arg = psb + (returnPoint - 1);
 	    if (isInteger(argumentsAt(0)))
@@ -309,8 +308,8 @@ int maxsteps;
 		    ipush(argarray);
 		    /* try again - if fail really give up */
 		    if (!findMethod(&methodClass)) {
-		    	//printf("%d\n", &methodClass);
-			sysWarn("can't find", "error recovery method");
+				sysWarn("can't find", "error recovery method");
+			
 			/* just quit */
 			return false;
 		    }

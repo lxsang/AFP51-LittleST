@@ -20,7 +20,8 @@ typedef unsigned char byte;
 #define byteToInt(b) (b)
 
 /* this is a bit sloppy - but it works */
-#define longCanBeInt(l) ((l >= -16383) && (l <= 16383))
+//#define longCanBeInt(l) ((l >= -16383) && (l <= 16383))
+#define longCanBeInt(l) ((l >= -1073741823) && (l <= 1073741823)) //2^30-1
 
 /* ======== various defines that should work on all systems ==== */
 

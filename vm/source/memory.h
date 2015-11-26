@@ -1,3 +1,5 @@
+#ifndef MEMORY_H
+#define MEMORY_H
 /*
 	Little Smalltalk, version 2
 	Written by Tim Budd, Oregon State University, July 1987
@@ -162,3 +164,4 @@ extern noreturn imageRead(FILEP);
 extern boolean debugging;
 extern void sysDecr(object z);
 extern boolean vm_execute(object aProcess, int maxsteps);
+#endif

@@ -66,7 +66,7 @@ object sysPrimitive(int number, object * arguments)
 	break;
 
     default:
-	sysError("unknown primitive", "sysPrimitive");
+	returnedObject = priv(number, arguments);
     }
     return (returnedObject);
 }

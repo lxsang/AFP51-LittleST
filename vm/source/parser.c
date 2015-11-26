@@ -798,6 +798,7 @@ boolean savetext;
 	basicAtPut(method, bytecodesInMethod, nilobj);
     } else {
 	bytecodes = newByteArray(codeTop);
+	//printf("New by array of %d elements, new size:%d\n", codeTop,sizeField(bytecodes));
 	bp = bytePtr(bytecodes);
 	for (i = 0; i < codeTop; i++) {
 	    bp[i] = codeArray[i];
