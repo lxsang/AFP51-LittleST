@@ -22,7 +22,7 @@ PLUGINSDEP = 	$(PLUGINS_BASE)/plugin.o \
 				$(PLUGINS_BASE)/dbhelper.o \
 				$(UTILS)
 PLUGINLIBS = -lsqlite3 
-VMLIBS = -lm
+VMLIBS = -lm -lpthread
 
 SYS_PRIV = 	source/spriv/spriv.o \
 			source/spriv/pointerpriv.o \
