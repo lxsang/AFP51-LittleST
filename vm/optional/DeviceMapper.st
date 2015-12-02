@@ -83,5 +83,7 @@ at:idx put:value
 at:idx put16:value
     self data isNil ifTrue:[^self].
     ^ (<152 5 devno idx value>)
-
+|
+intAt:idx wsize:size
+	^(<152 7 devno idx size>)
 ]

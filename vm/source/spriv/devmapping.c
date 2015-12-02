@@ -91,6 +91,27 @@ object  dev_write_data32(object idx, int offset, int data)
 	}
 	return falseobj;
 }
+object dev_read_by_words(object idx, int offset, int ws)
+{
+	unsigned char* ptr = (unsigned char*) sysMemPtr(idx);
+	if(ptr)
+	{
+		switch(ws)
+		{
+			case 8:
+				return newInteger( 	(*((unsigned char*)(ptr+offset+3)) << 24) + 
+									(*((unsigned char*)(ptr+offset+2)) << 16) +
+									(*((unsigned char*)(ptr+offset+1)) << 8)  +
+									(*((unsigned char*)(ptr+offset))));
+			case 16:
+				return newInteger( (*((unsigned short*)(ptr+offset+2)) << 16)  +
+									(*((unsigned short*)(ptr+offset))));
+			case 32:
+				return newInteger(*((int*)(ptr+offset)));
+		}
+	}
+	return nilobj;
+}
 object dev_priv(object* args)//3 arguments
 {
 	int type = args[0]>>1;
@@ -131,6 +152,8 @@ object dev_priv(object* args)//3 arguments
 			
 		case DEV_W32:// index begin at 1
 			return dev_write_data32(args[1], (args[2]>>1)-1, args[3] >> 1);
+		case DEV_R_BY_W:
+			return dev_read_by_words(args[1], (args[2]>>1)-1, args[3] >> 1);
 		default: 
 			printf("Unsupported device primitive:%d\n",type );
 			return nilobj;

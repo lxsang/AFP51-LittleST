@@ -20,6 +20,7 @@
 #define DEV_R32 4
 #define DEV_W16 5
 #define DEV_W32 6
+#define DEV_R_BY_W 7
 // devices
 object dev_open(const char*, int);
 void dev_close(object,object);
@@ -29,4 +30,5 @@ object  dev_read_data16(object, int);
 object  dev_read_data32(object, int);
 object  dev_write_data16(object, int , int );
 object  dev_write_data32(object, int , int );
+object dev_read_by_words(object, int, int);
 #endif
