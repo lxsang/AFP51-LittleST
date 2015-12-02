@@ -10,6 +10,7 @@
 #include "../env.h"
 #include "../memory.h"
 #include "../names.h"
+#include "pointerpriv.h"
 
 #define MAX_DEV 20
 #define DEV_O 0
@@ -21,11 +22,11 @@
 #define DEV_W32 6
 // devices
 object dev_open(const char*, int);
-void dev_close(int,object);
-object dev_map(int, int);
+void dev_close(object,object);
+object dev_map(object, int);
 object dev_priv(object*);
-object  dev_read_data16(int, int);
-object  dev_read_data32(int, int);
-object  dev_write_data16(int , int , int );
-object  dev_write_data32(int , int , int );
+object  dev_read_data16(object, int);
+object  dev_read_data32(object, int);
+object  dev_write_data16(object, int , int );
+object  dev_write_data32(object, int , int );
 #endif

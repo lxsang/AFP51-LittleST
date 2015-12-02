@@ -149,7 +149,7 @@ var playground_config = {
 	load_log:function(code)
 	{
 		//w2alert(code);
-		webtty = new EventSource('/ffvm/webtty?code='+code);
+		webtty = new EventSource('/ffvm/webtty?code='+encodeURIComponent(code));
 		webtty.onmessage = function (e) {
 		   $("#pg_log").append(e.data + "<br>");
 		   var par = $("#pg_log").parent();

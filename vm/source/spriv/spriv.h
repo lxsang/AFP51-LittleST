@@ -5,9 +5,11 @@
 
 #include "../env.h"
 #include "../memory.h"
+#include "pointerpriv.h"
 #include "devmapping.h"
 #include "timepriv.h"
-
+#include "rospriv.h"
 
 object priv(int, object*);
+
 #endif

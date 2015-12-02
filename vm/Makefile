@@ -3,25 +3,38 @@ CFLAGS=-W -Wall -g -std=c99 -D DEBUG
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     PLUGINS_BASE=/root/workspace/ant-http/plugins
+	STROS_BASE=/root/workspace/STRos
     BUILDIRD=/root/antd/plugins
 endif
 ifeq ($(UNAME_S),Darwin)
 	BUILDIRD=../build/plugins/
 	PLUGINS_BASE=/Users/mrsang/Documents/ushare/cwp/ant-http/plugins
+	STROS_BASE=/Users/mrsang/Documents/ushare/cwp/STRos
 endif
 
 EXT=dylib
 PLUGINS=ffvm.$(EXT)
+UTILS = 	$(PLUGINS_BASE)/dictionary.o \
+			$(PLUGINS_BASE)/list.o \
+			$(PLUGINS_BASE)/utils.o
 PLUGINSDEP = 	$(PLUGINS_BASE)/plugin.o \
 				$(PLUGINS_BASE)/dbhelper.o \
-				$(PLUGINS_BASE)/dictionary.o \
-				$(PLUGINS_BASE)/utils.o
+				$(UTILS)
 PLUGINLIBS = -lsqlite3 
 VMLIBS = -lm
 
 SYS_PRIV = 	source/spriv/spriv.o \
+			source/spriv/pointerpriv.o \
 			source/spriv/devmapping.o \
-			source/spriv/timepriv.o 
+			source/spriv/timepriv.o \
+			source/spriv/rospriv.o 
+STROS_OBJ = $(STROS_BASE)/request.o\
+ 			$(STROS_BASE)/3rd/ini/ini.o\
+			$(STROS_BASE)/3rd/xml/sxmlc.o\
+			$(STROS_BASE)/response.o\
+			$(STROS_BASE)/rpc.o\
+			$(STROS_BASE)/stros.o\
+			$(STROS_BASE)/api.o 
 VMDEP = source/memory_v1.o \
 		source/names.o \
 		source/news.o \
@@ -33,8 +46,9 @@ VMDEP = source/memory_v1.o \
 		source/unixio.o \
 		source/free_list.o\
 		$(SYS_PRIV) \
+		$(STROS_OBJ) \
 		source/tty.o 
-
+			
 ST_BOOTSTRAP =  basic.st \
 	 			mag.st \
 				collect.st \
@@ -43,13 +57,16 @@ ST_BOOTSTRAP =  basic.st \
 				tty.st \
 				../optional/extern.st\
 				../optional/imng.st \
+				../optional/Pointer.st \
 				../optional/DeviceMapper.st \
-				../optional/Date.st
+				../optional/Date.st \
+				../optional/ROSNode.st \
+				../optional/ROSTopic.st
 
-main: $(PLUGINSDEP) $(VMDEP)  $(PLUGINS)
+main: $(PLUGINSDEP) $(VMDEP)  $(PLUGINS) 
 
 %.o: %.c
-		$(CC) $(CFLAGS) -I$(PLUGINS_BASE) -c $< -o $@
+		$(CC) $(CFLAGS) -I$(PLUGINS_BASE) -I$(STROS_BASE) -c $< -o $@
 
 
 %.$(EXT): %.o
@@ -66,8 +83,8 @@ clean:
 buildimage:
 	$(CC) $(CFLAGS) -c source/initial.c -o source/initial.o
 	$(CC) $(CFLAGS) -c source/st.c -o source/st.o
-	$(CC) $(CFLAGS) $(VMDEP) source/st.o -o lst3 $(VMLIBS)
-	$(CC) $(CFLAGS) $(VMDEP) source/initial.o -o build_image $(VMLIBS)
+	$(CC) $(CFLAGS) $(VMDEP) $(UTILS) source/st.o -o lst3 $(VMLIBS)
+	$(CC) $(CFLAGS) $(VMDEP) $(UTILS) source/initial.o -o build_image $(VMLIBS)
 	@cd bootstrap && ../build_image $(ST_BOOTSTRAP)
 	@mv bootstrap/systemImage ./image
 	cp -i image $(BUILDIRD)/image.im

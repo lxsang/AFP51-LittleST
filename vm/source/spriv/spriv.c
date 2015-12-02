@@ -6,13 +6,20 @@ object priv(int number, object* parameter)
 	switch(high_priv)
 	{
 		case 1:
+			//pointer primitive
+			return pointer_priv(parameter);
+		case 2:
 			// primitive 151 device mapping
 			return dev_priv(parameter);
 			
-		case 2:
+		case 3:
 			// time primitive
 			return time_priv(parameter);
+		case 4: // ROS primitive
+			return rospriv(parameter);
 		default: 
 			sysError("Unknown primitive", "sysPrimitive");
+			return nilobj;
 	}
 }
+

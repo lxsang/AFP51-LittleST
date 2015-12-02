@@ -34,7 +34,7 @@ object time_priv(object* args)
 			return new_date();
 		case TIME_PRIV_SL:
 			usleep((args[1]>>1)*1000);
-			return new_date();
+			return nilobj;
 		default: return nilobj;
 	}
 }

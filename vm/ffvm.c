@@ -18,6 +18,7 @@ boolean vm_execute(object aProcess, int maxsteps);
 
 object create_process(const char* code)
 {
+	//printf("%s\n", code);
     object process, stack, method, processClass;
     method = newMethod();
     setInstanceVariables(nilobj);
@@ -63,7 +64,7 @@ object schedulerRun (char* text)
 		basicAtPut(scheduler,3,process);
 	}
 	object wprocess = globalSymbol("webProcess");
-	object stack = basicAt(wprocess, stackInProcess);
+	//object stack = basicAt(wprocess, stackInProcess);
     /* now go execute it */
 	// run the scheduler, not the process which will run all the
 	// process in its processlist
@@ -99,8 +100,7 @@ void init()
         	sysTmp <- ''. \
 			scheduler <- Scheduler new.\
     		imgMeta <- ImageManager new.\
-			bBlock <- [webProcess <- bBlock newProcess. scheduler runOne]. \
-			webProcess <- bBlock newProcess.");
+			webProcess <- [scheduler runOne] newProcess.");
     LOG("%s","Finish load image\n");
 }
 void pexit()
@@ -323,6 +323,14 @@ void get_image(int client, const char* method, dictionary rq)
 	octstream(client,"FireflySTImage.im");
 	__fb(client,file);
 }
+void kwdump(int client, const char* method, dictionary rq)
+{
+	char * file = __s("%s/img.kw", __plugin__.pdir);
+	char* code = __s("x imgMeta imageKeywords:'%s'",file);
+	ignore goDoIt(code);
+	json(client);
+	__t(client,"{\"result\":1,\"msg\":\"OK\"}");
+}
 void scriptbin(int client, const char* method, dictionary rq)
 {
 	FILE* fp;
@@ -356,7 +364,7 @@ void scriptbin(int client, const char* method, dictionary rq)
 		free(file);
 	}
 }
-int read_buf(int fd, char*buf,int size)
+int tty_read_buf(int fd, char*buf,int size)
 {
 	int i = 0;
 	char c = '\0';
@@ -402,13 +410,13 @@ void webtty(int client, const char* m, dictionary rq)
 		 pthread_mutex_lock (&exec_mux);
 		 ignore schedulerRun(query);
 		 pthread_mutex_unlock (&exec_mux);
-	     //perror("execl");
+	    // perror("execl");
 	     _exit(1);
 	}
 	close(filedes[1]);
 	char buffer[1024];
 	while (1) {
-		ssize_t count = read_buf(filedes[0],buffer, sizeof(buffer));
+		ssize_t count = tty_read_buf(filedes[0],buffer, sizeof(buffer));
 		if (count == -1) {
 			if (errno == EINTR) {
 				continue;

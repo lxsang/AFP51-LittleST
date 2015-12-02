@@ -16,7 +16,7 @@ at:idx
 |
 at:idx put32:value
     self data isNil ifTrue:[^self].
-    ^ (<151 6 devno idx value>)
+    ^ (<152 6 devno idx value>)
 
 |
 data
@@ -34,11 +34,11 @@ bytesDo:aBlock
 
 |
 close
-    <151 1 devno data>
+    <152 1 devno data>
 
 |
 int32At:idx
-    ^(<151 4 devno idx>)
+    ^(<152 4 devno idx>)
 
 |
 path:aFile
@@ -55,14 +55,14 @@ open
         Smalltalk error:'No dev file specified'.
         ^false
     ].
-    devno <- (<151 0 path size>).
+    devno <- (<152 0 path size>).
     devno isNil ifTrue:[
         self close.
         Smalltalk error:'Cannot map the device', (self path).
         ^false
     ].
     "map to array"
-    data <- (<151 2 devno size>).
+    data <- (<152 2 devno size>).
     data isNil ifTrue:[
         self close.
         Smalltalk error:'Cannot create ByteArray object'.
@@ -72,7 +72,7 @@ open
 
 |
 int16At:idx
-    ^(<151 3 devno idx>)
+    ^(<152 3 devno idx>)
 
 |
 at:idx put:value
@@ -82,6 +82,6 @@ at:idx put:value
 |
 at:idx put16:value
     self data isNil ifTrue:[^self].
-    ^ (<151 5 devno idx value>)
+    ^ (<152 5 devno idx value>)
 
 ]

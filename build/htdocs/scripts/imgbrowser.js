@@ -141,7 +141,7 @@ var config = {
                        			methodsb_config.save_method();
                        			break;
                        		case 'ed_ac_reload':
-                       			$.post( "/ffvm/run_on_ws", {code:"imgMeta imageKeywords"});
+                       			$.post( "/ffvm/kwdump", {});
                        			break;
                        		default:
 

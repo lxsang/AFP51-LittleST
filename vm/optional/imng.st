@@ -56,10 +56,10 @@ Methods ImageManager 'all'
 	    var do:[:each| 
 	    	f print:(',{"value": "',each,'", "score": 1000, "meta": "variables"}')].
 |
-	imageKeywords |list  f|
+	imageKeywords:file |list  f|
 	    list <- List new.
 	    list add:Object.
-	    f <- File new; name: 'img.kw';mode: 'w';open.
+	    f <- File new; name: file;mode: 'w';open.
 	    f print:('[{"value": "Object", "score": 1000, "meta": "class"}').
 	    self dumpAllSubClassesOf:Object to:list.
 	    self genAllKeywordsOf:list to:f.

@@ -1,3 +1,4 @@
+#ifndef ENV_H
 /*
 	Little Smalltalk, version two
 	Written by Tim Budd, Oregon State University, July 1987
@@ -53,4 +54,5 @@ typedef int boolean;
 #define NOARGS void
 #define FILEP FILE *
 #define FUNC ()
-
+#define ENV_H
+#endif

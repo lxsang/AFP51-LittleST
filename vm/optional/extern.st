@@ -5,7 +5,7 @@ Methods String 'all'
 ]
 Methods Integer 'all'
 wait
-	<152 1 self>
+	<153 1 self>
 |
 miliseconds
 	^ self
@@ -19,10 +19,9 @@ minutes
 Methods Scheduler 'all'
 	runOne
 		" run as long as process list is non empty "
-		[ notdone ] whileTrue:
-			[ processList size > 0 ifTrue: 
-			  [
-			    processList do: 
-				    [ :x | currentProcess <- x.
-					    x execute  ]]]
+		[ processList size > 0] whileTrue: 
+			[
+				processList do: 
+				[ :x | currentProcess <- x.
+					    x execute  ]]
 ]
