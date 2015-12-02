@@ -4,7 +4,7 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     PLUGINS_BASE=/root/workspace/ant-http/plugins
 	STROS_BASE=/root/workspace/STRos
-    BUILDIRD=/root/antd/plugins
+    BUILDIRD=../build/plugins/
 endif
 ifeq ($(UNAME_S),Darwin)
 	BUILDIRD=../build/plugins/
