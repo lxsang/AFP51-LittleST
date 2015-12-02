@@ -3,7 +3,7 @@ CFLAGS=-W -Wall -g -std=c99 -D DEBUG
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     SERVER_BASE=/root/workspace/ant-http
-    BUILDIRD=/root/antd
+    BUILDIRD=/build
 endif
 ifeq ($(UNAME_S),Darwin)
 	BUILDIRD=./build
