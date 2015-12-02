@@ -1,17 +1,18 @@
 CC=gcc
-CFLAGS=-W -Wall -g -std=c99 -D DEBUG
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     PLUGINS_BASE=/root/workspace/ant-http/plugins
 	STROS_BASE=/root/workspace/STRos
     BUILDIRD=../build/plugins/
+	PF_FLAG=-D_GNU_SOURCE
 endif
 ifeq ($(UNAME_S),Darwin)
 	BUILDIRD=../build/plugins/
 	PLUGINS_BASE=/Users/mrsang/Documents/ushare/cwp/ant-http/plugins
 	STROS_BASE=/Users/mrsang/Documents/ushare/cwp/STRos
+	PF_FLAG=-D_GNU_SOURCE
 endif
-
+CFLAGS=-W -Wall -g -std=c99 -D DEBUG $(PF_FLAG)
 EXT=dylib
 PLUGINS=ffvm.$(EXT)
 UTILS = 	$(PLUGINS_BASE)/dictionary.o \
