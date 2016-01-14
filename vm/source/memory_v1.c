@@ -72,7 +72,7 @@ struct objectStruct objectTable[ObjectTableMax];
 
 #ifndef mBlockAlloc
 
-#define MemoryBlockSize 6000
+#define MemoryBlockSize 1024*1024 //6000
 		/* the current memory block being hacked up */
 static object *memoryBlock;	/* malloc'ed chunck of memory */
 static int currentMemoryPosition;	/* last used position in above */
@@ -226,12 +226,12 @@ int memorySize;
 				else
 				{
 					// if it's smaller, make it bigger
-					printf("Make it bigger\n");
+					//printf("Make it bigger %d %d\n", cursize, memorySize);
 					objectTable[position].size = memorySize;
 					#ifdef mBlockAlloc
 		    		free(objectTable[position].memory);
 					#endif
-					objectTable[position].memory = mBlockAlloc(memorySize);
+					objectTable[position].memory = mBlockAlloc(memorySize);//(object*)calloc(memorySize,sizeof(object));
 				}
 				done = true;
 				i = MAX_FLIST;// break the second loop :)

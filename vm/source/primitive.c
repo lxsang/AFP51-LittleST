@@ -641,10 +641,15 @@ object *arguments;
 
 	case 5:		/* integer unary operations */
 	    if (!isInteger(arguments[0]))
-		returnedObject = nilobj;
+		{
+			returnedObject = nilobj;
+		}
 	    else
-		returnedObject = intUnary(primitiveNumber - 50,
+		{
+			returnedObject = intUnary(primitiveNumber - 50,
 					  intValue(arguments[0]));
+			
+		}
 	    break;
 
 	case 6:

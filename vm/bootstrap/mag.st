@@ -248,6 +248,9 @@ Methods Integer 'all'
 				ifFalse: [ self asLongInteger + value asLongInteger ]]
 			ifFalse: [ super + value ]
 |
+to:top do:aBlock
+	<153 3 self top aBlock>
+|
 	- value		| r |
 		^ (self isShortInteger and: [value isShortInteger])
 			ifTrue: [ r <- <61 self value>.

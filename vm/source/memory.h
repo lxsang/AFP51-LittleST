@@ -33,7 +33,7 @@ typedef int object;
 struct objectStruct {
     object class;
     short referenceCount;
-    short size;
+    int size;// this should be int
     object *memory;
 };
 
@@ -92,7 +92,7 @@ extern object allocStr(STR);
 
 extern object intobj;
 
-#define isInteger(x) ((x) & 0x8001)
+#define isInteger(x) ((x) & 0x80000001)
 #define newInteger(x) ( (intobj = x)<0 ? intobj : (intobj<<1)+1 )
 #define intValue(x) ( (intobj = x)<0 ? intobj : (intobj>>1) )
 

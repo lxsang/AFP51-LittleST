@@ -62,7 +62,12 @@ ST_BOOTSTRAP =  basic.st \
 				../optional/DeviceMapper.st \
 				../optional/Date.st \
 				../optional/ROSNode.st \
-				../optional/ROSTopic.st
+				../optional/ROSTopic.st \
+				../optional/APF51Mapper.st \
+				../optional/ODMapper.st \
+				../optional/SCMapper.st \
+				../optional/FRDBMapper.st \
+				../optional/RWTest.st
 
 main: $(PLUGINSDEP) $(VMDEP)  $(PLUGINS) 
 
@@ -89,3 +94,5 @@ buildimage:
 	@cd bootstrap && ../build_image $(ST_BOOTSTRAP)
 	@mv bootstrap/systemImage ./image
 	cp -i image $(BUILDIRD)/image.im
+	
+full: clean main buildimage

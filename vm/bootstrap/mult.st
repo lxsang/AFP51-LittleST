@@ -22,6 +22,9 @@ Methods Block 'forks'
 					put: (args at: i)]].
 		^ self newProcess
 |
+timesToRun
+	^(<153 2 self>)
+|
 	fork
 		self newProcess resume
 |

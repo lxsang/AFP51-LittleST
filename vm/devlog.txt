@@ -5,3 +5,6 @@ TO FIX
 	extern allocation size : allocation bigger than permitted
 	#define FREELISTMAX 2000 -> 4000
 	extern string buffer size
+	modify size field to int of object struct
+	
+Memory allocation problem when allocating a block greater than 6000 (define as default), find an efficient way to resolve it

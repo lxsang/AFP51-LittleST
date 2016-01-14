@@ -1,66 +1,124 @@
-Class DeviceMapper Object path devno size data
+Class DeviceMapper Object path devno size data devfile rflow wflow
 Methods DeviceMapper 'all'
 
-devno
-    ^devno
+int32At:idx
+    ^(<152 4 devno idx>)
+
 
 |
-size:aNumber
-    size <- aNumber
+new 
+    wflow <- Array new:4.
+	rflow <- Array new:4.
+    self wflowConfig.
+	self rflowConfig.
+|
 
+wflow:arr
+	wflow <- arr
+
+|
+rflow:arr
+	rflow <- arr
+|
+rflow
+	^ rflow
 |
 at:idx
     self data isNil ifTrue:[^nil].
     ^ self data basicAt:idx
 
-|
-at:idx put32:value
-    self data isNil ifTrue:[^self].
-    ^ (<152 6 devno idx value>)
 
 |
+
 data
     ^data
 
+
+|
+wflowConfig
+    ^self
+|
+rflowConfig
+	^ self
 |
 size
     ^size
 
+
 |
+
 bytesDo:aBlock
     self data isNil ifFalse:[
         self data do:aBlock
     ]
 
+
 |
+
+at:idx put16:value
+    self data isNil ifTrue:[^self].
+    ^ (<152 5 devno idx value>)
+
+|
+
+at:idx put:value wsize:size
+	^(<152 9 devno idx value size>)
+
+|
+
+intAt:idx wsize:size
+	^(<152 7 devno idx size 4>)
+
+|
+
+at:idx put32:value
+    self data isNil ifTrue:[^self].
+    ^ (<152 6 devno idx value>)
+
+
+|
+
 close
-    <152 1 devno data>
+    <152 1 devno data devfile>
+
 
 |
-int32At:idx
-    ^(<152 4 devno idx>)
+
+size:aNumber
+    size <- aNumber
+
 
 |
-path:aFile
-    path <- aFile
+
+int16At:idx
+    ^(<152 3 devno idx>)
+
 
 |
+
 path
     ^path
-
 |
-open
+writeArray:anObj
+	^ (<152 10 devno (self wflow) anObj>)
+|
+readArrayOfInt16:object
+	^(<152 11 devno (self rflow) object>)
+|
+open |arr|
     "connect to the device"
     self path isNil ifTrue:[
         Smalltalk error:'No dev file specified'.
         ^false
     ].
-    devno <- (<152 0 path size>).
-    devno isNil ifTrue:[
+    arr <- (<152 0 path size>).
+    arr isNil ifTrue:[
         self close.
         Smalltalk error:'Cannot map the device', (self path).
         ^false
     ].
+	devfile <- arr at:1.
+	devno <- arr at:2.
     "map to array"
     data <- (<152 2 devno size>).
     data isNil ifTrue:[
@@ -70,20 +128,35 @@ open
     ].
     ^true
 
-|
-int16At:idx
-    ^(<152 3 devno idx>)
 
 |
+
+waitForIRQ:aBlock |irq|
+	irq <- (<152 8>).
+	irq ifTrue:[aBlock value].
+
+|
+
+wflow
+	^wflow
+
+|
+
 at:idx put:value
     self data isNil ifTrue:[^self].
     ^ self data basicAt:idx put:value
 
+
 |
-at:idx put16:value
-    self data isNil ifTrue:[^self].
-    ^ (<152 5 devno idx value>)
+
+devno
+    ^devno
+
+
 |
-intAt:idx wsize:size
-	^(<152 7 devno idx size>)
+
+path:aFile
+    path <- aFile
+
+
 ]
