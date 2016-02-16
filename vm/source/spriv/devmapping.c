@@ -250,8 +250,8 @@ object dev_read_by_words(object idx, int offset, int ws, int dsize)
 									(dsize >= 2)?(*((unsigned char*)(ptr+offset+1)) <<8):0  +
 									(*((unsigned char*)(ptr+offset))));
 			case 16:
-				return newInteger( (dsize == 4)?(*((unsigned short*)(ptr+offset+2)) << 16):0 +
-									(*((unsigned short*)(ptr+offset))));
+				return newInteger( ((dsize == 4)?((int)*((unsigned short*)(ptr+offset+2)) << 16):0) +
+									((int)*((unsigned short*)(ptr+offset))));
 			case 32:
 				return newInteger(*((int*)(ptr+offset)));
 		}
