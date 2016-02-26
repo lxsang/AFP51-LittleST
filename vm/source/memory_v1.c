@@ -129,7 +129,7 @@ void setFreeLists()
 	    p = &objectTable[z];
 	    size = p->size;
 	    if (size < 0)
-		size = ((-size) + 1) / 2;
+		size = ((-size) + 3) / 4;
 	    //p->class = objectFreeList[size];
 		p->class = FL_GET(size);
 	    FL_SET(size,z);
@@ -214,7 +214,7 @@ int memorySize;
 				//dump_fl();
 				int cursize = objectTable[position].size;
 			    if (cursize < 0)
-					cursize = ((-cursize) + 1) / 2;
+					cursize = ((-cursize) + 3) / 4;
 				//printf("%d\n", FL_GET(0));
 				//printf("Found free at: %d object of %d-> %d vs %d, class %d\n",position, np->key, cursize, memorySize,objectTable[position].class);
 				FL_SET(cursize,objectTable[position].class);
@@ -281,7 +281,7 @@ int size;
 {
     object newObj;
 
-    newObj = allocObject((size + 1) / 2);
+    newObj = allocObject((size + 3) / 4);
     /* negative size fields indicate bit objects */
     sizeField(newObj) = -size;
     return newObj;
@@ -337,7 +337,7 @@ void sysDecr(object z)
     decr(p->class);
     size = p->size;
     if (size < 0)
-	size = ((-size) + 1) / 2;
+		size = ((-size) + 3) / 4;
     p->class = FL_GET(size);//objectFreeList[size];
     //objectFreeList[size] = z >> 1;
 	FL_SET(size,z >> 1);
@@ -422,7 +422,7 @@ register int i;
 
     if (isInteger(z))
 	sysError("indexing integer", "byteAt");
-    else if ((i <= 0) || (i > 2 * -sizeField(z))) {
+    else if ((i <= 0) || (i >  -sizeField(z))) {
 	fprintf(stderr, "index %d size %d\n", i, sizeField(z));
 	sysError("index out of range", "byteAt");
     } else {
@@ -444,7 +444,7 @@ int i, x;
 
     if (isInteger(z))
 	sysError("indexing integer", "byteAtPut");
-    else if ((i <= 0) || (i > 2 * -sizeField(z))) {
+    else if ((i <= 0) || (i >  -sizeField(z))) {
 	fprintf(stderr, "index %d size %d\n", i, sizeField(z));
 	sysError("index out of range", "byteAtPut");
     } else {

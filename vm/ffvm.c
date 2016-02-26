@@ -75,6 +75,7 @@ object goDoIt(const char* code)
 {
 	object process = create_process(code);
 	while (vm_execute(process, 5000));
+	decr(process);
 	return basicAt(basicAt(process, stackInProcess),1);
 }
 void init()

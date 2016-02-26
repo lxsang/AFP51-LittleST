@@ -32,8 +32,12 @@ at:idx
 
 data
     ^data
-
-
+|
+driver
+	^ 'obtrkn.ko'
+|
+loadGateware: path
+	^ <152 12 path (self driver)>
 |
 wflowConfig
     ^self

@@ -15,8 +15,10 @@ object priv(int number, object* parameter)
 		case 3:
 			// time primitive
 			return time_priv(parameter);
+#ifdef ROS_INC
 		case 4: // ROS primitive
 			return rospriv(parameter);
+#endif
 		default: 
 			sysError("Unknown primitive", "sysPrimitive");
 			return nilobj;

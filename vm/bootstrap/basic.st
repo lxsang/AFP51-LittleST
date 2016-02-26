@@ -87,8 +87,9 @@ Methods Class 'creation'
 			ifFalse: [ newObject new ]
 |
 	new: size	" hack out block the right size and class "
-		"create a new block, set its class"
-		^ < 22 < 58 size > self >
+			"create a new block, set its class"
+			self = ByteArray ifTrue:[^ <22 <59 size> ByteArray>].
+			^ < 22 < 58 size > self >
 |
 	addSubClass: aSymbol instanceVariableNames: aString	| newClass |
 		newClass <- Class new; name: aSymbol; superClass: self;

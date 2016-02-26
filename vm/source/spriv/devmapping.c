@@ -277,6 +277,42 @@ object dev_wait_for_irq(object obj)
 	}
 	return falseobj;
 }
+/**
+	cofigure the fpga with given file
+	
+*/
+object dev_conf_fpga(object file, object module)
+{
+	char* path = charPtr(file);
+	char* mpath = charPtr(module);
+	printf("Load gateware of : %s with kernel %s\n", path, mpath);
+	return trueobj;
+	char cmd[255];
+	int status;
+	// check if the file exist
+	if(!FILE_OK(path)) return falseobj;
+	// remove the kernel
+	sprintf(cmd,"rmmod %s",mpath);
+	status = system(cmd);
+	if(status == -1 ) printf("Problem when remove the kernel module : %s", mpath);
+	// configure the fpga
+	sprintf(cmd,"load_fpga %s", path);
+	status = system(cmd);
+	if(status == - 1)
+	{
+		printf("Cannot program the fpga %s", path);
+		return falseobj;
+	}
+	// reinsert the module
+	sprintf(cmd,"insmod %s", mpath);
+	status = system(cmd);
+	if(status == -1)
+	{
+		printf("cannot re-activate the kernel module");
+		return falseobj;
+	}
+	return trueobj;
+}
 object dev_priv(object* args)//3 arguments
 {
 	int type = args[0]>>1;
@@ -327,6 +363,8 @@ object dev_priv(object* args)//3 arguments
 			return dev_write_data_chunk(args[1], args[2], args[3]);
 		case DEV_R_CHUNK:
 			return dev_read_data_chunk(args[1], args[2], args[3]);
+		case DEV_CONF_FPGA:
+			return dev_conf_fpga(args[1], args[2]);
 		default: 
 			printf("Unsupported device primitive:%d\n",type );
 			return nilobj;
