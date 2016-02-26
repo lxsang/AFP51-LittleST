@@ -34,7 +34,7 @@ data
     ^data
 |
 driver
-	^ 'obtrkn.ko'
+	^ '/root/kernels/obtrkn.ko'
 |
 loadGateware: path
 	^ <152 12 path (self driver)>

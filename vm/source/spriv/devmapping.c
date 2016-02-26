@@ -285,8 +285,8 @@ object dev_conf_fpga(object file, object module)
 {
 	char* path = charPtr(file);
 	char* mpath = charPtr(module);
-	printf("Load gateware of : %s with kernel %s\n", path, mpath);
-	return trueobj;
+	//printf("Load gateware of : %s with kernel %s\n", path, mpath);
+	//return trueobj;
 	char cmd[255];
 	int status;
 	// check if the file exist
