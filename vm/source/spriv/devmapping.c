@@ -294,11 +294,11 @@ object dev_conf_fpga(object file, object module)
 	// remove the kernel
 	sprintf(cmd,"rmmod %s",mpath);
 	status = system(cmd);
-	if(status == -1 ) printf("Problem when remove the kernel module : %s", mpath);
+	if(status != 0 ) printf("Problem when remove the kernel module : %s", mpath);
 	// configure the fpga
 	sprintf(cmd,"load_fpga %s", path);
 	status = system(cmd);
-	if(status == - 1)
+	if(status != 0)
 	{
 		printf("Cannot program the fpga %s", path);
 		return falseobj;
@@ -306,7 +306,7 @@ object dev_conf_fpga(object file, object module)
 	// reinsert the module
 	sprintf(cmd,"insmod %s", mpath);
 	status = system(cmd);
-	if(status == -1)
+	if(status != 0)
 	{
 		printf("cannot re-activate the kernel module");
 		return falseobj;
