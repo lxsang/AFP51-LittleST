@@ -60,6 +60,7 @@ void dev_close(object idx, object ref, int devf)
 	if(ptr)
 	{
 		munmap(ptr, size);
+		ptr = NULL;
 		//sysdevs[idx] = NULL;
 	}
 }
