@@ -292,7 +292,7 @@ object dev_conf_fpga(object file, object module)
 	// check if the file exist
 	if(!FILE_OK(path)) return falseobj;
 	// remove the kernel
-	sprintf(cmd,"rmmod %s",mpath);
+	sprintf(cmd,"modprobe -rf %s",mpath);
 	status = system(cmd);
 	if(status != 0 ) printf("Problem when remove the kernel module : %s", mpath);
 	// configure the fpga
@@ -304,7 +304,7 @@ object dev_conf_fpga(object file, object module)
 		return falseobj;
 	}
 	// reinsert the module
-	sprintf(cmd,"insmod %s", mpath);
+	sprintf(cmd,"modprobe %s", mpath);
 	status = system(cmd);
 	if(status != 0)
 	{
