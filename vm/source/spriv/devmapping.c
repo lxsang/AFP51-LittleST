@@ -18,11 +18,11 @@ object dev_open(const char* path, int size)
     	return nilobj;
 	}
 	// close the file
-	/*if(close(devf) == -1)
+	if(close(devf) == -1)
 	{
 		printf("Cant close the file: %s\n",path);
-		return nilobj;
-	}*/
+		//return nilobj;
+	}
 	object arr = newArray(2);
 	basicAtPut(arr,1,newInteger(devf));
 	basicAtPut(arr,2,newPointer(ptr));
@@ -53,10 +53,10 @@ void dev_close(object idx, object ref, int devf)
 	objectTable[ref>>1].memory = NULL;
 	objectTable[ref>>1].size = 0;
 	unsigned char* ptr = (unsigned char*) sysMemPtr(idx);
-	if(close(devf) == -1)
+	/*if(close(devf) == -1)
 	{
 		printf("Cant close the file\n");
-	}
+	}*/
 	if(ptr)
 	{
 		munmap(ptr, size);
