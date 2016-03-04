@@ -507,6 +507,7 @@ void portal(int c, const char* m, dictionary rq)
 			json(c);
 			query  = __s("x ^ (imgMeta %s) asJSON",code);
 			__t(c,"%s", result_string_of(query));
+			break;
 		case 1:// stream request
 			query = __s("x (imgMeta %s)",code);
 			stdout_to_socket(c,query);
