@@ -96,7 +96,7 @@ Methods ImageManager 'all'
 		key <- aClass asString.
 		val <- gwId at:key ifAbsent:[^ false].
 		val = anID ifFalse:[^false].
-		sysPortal class = aClass ifTrue:[^true].
+		"sysPortal class = aClass ifTrue:[^true]."
 		sysPortal <- aClass new.
 		^true
 |
