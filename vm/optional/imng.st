@@ -97,11 +97,16 @@ Methods ImageManager 'all'
 		val <- gwId at:key ifAbsent:[^ false].
 		val = anID ifFalse:[^false].
 		"sysPortal class = aClass ifTrue:[^true]."
+		self portalClose.
 		sysPortal <- aClass new.
 		^true
 |
 	remoteExecute:code
 		^(('sysPortal ',code) value) 
+|
+	portalClose
+		sysPortal isNil ifTrue:[^self].
+		(sysPortal respondTo includesKey:#close) ifTrue:[sysPortal close]
 |
 	loadGateware
 		"this need to be fixed to make it more independent"
@@ -110,6 +115,7 @@ Methods ImageManager 'all'
 |
 	loadSource:id class:name
 		sysTmp isNil ifTrue:[^ false ].
+		self portalClose.
 		<120 1 sysTmp 'r'>. <123 1>. <121 1>.
 		name isNil ifFalse:[gwId at:name put:id].
 		^ true 
