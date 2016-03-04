@@ -106,7 +106,7 @@ Methods ImageManager 'all'
 	loadGateware
 		"this need to be fixed to make it more independent"
 		sysTmp isNil ifTrue:[^ false ].
-		^ (<152 12 sysTmp '/root/kernels/obtrkn.ko'>) 
+		^ (<152 12 sysTmp 'obtrkn'>) 
 |
 	loadSource:id class:name
 		sysTmp isNil ifTrue:[^ false ].
