@@ -10,7 +10,7 @@ ifeq ($(UNAME_S),Darwin)
 	SERVER_BASE=/Users/mrsang/Documents/ushare/cwp/ant-http
 endif
 SERVER=	$(SERVER_BASE)/plugin_manager.o \
-		$(SERVER_BASE)/ini.o\
+		$(SERVER_BASE)/plugins/ini.o\
 		$(SERVER_BASE)/http_server.o\
 		$(SERVER_BASE)/plugins/dictionary.o\
 		$(SERVER_BASE)/plugins/utils.o

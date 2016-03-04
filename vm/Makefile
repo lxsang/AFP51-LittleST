@@ -27,6 +27,7 @@ ifeq ($(USE_DB),FALSE)
 endif
 EXT=dylib
 PLUGINS=ffvm.$(EXT)
+ 
 UTILS = 	$(PLUGINS_BASE)/dictionary.o \
 			$(PLUGINS_BASE)/list.o \
 			$(PLUGINS_BASE)/utils.o
@@ -129,6 +130,7 @@ buildimage:
 	$(CC) $(CFLAGS) $(VMDEP) $(UTILS) source/initial.o -o build_image $(VMLIBS)
 	@cd bootstrap && ../build_image $(ST_BOOTSTRAP)
 	@mv bootstrap/systemImage ./image
-	cp -i image $(BUILDIRD)/image.im
+	-mkdir $(BUILDIRD)/ffvm
+	cp -i image $(BUILDIRD)/ffvm/image.im
 	
 full: clean main buildimage

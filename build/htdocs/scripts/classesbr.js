@@ -123,6 +123,37 @@ var sclbrr_config = {
 			//$("dl_frame").src =  window.location.href + 
 			window.open("/ffvm/exp_class?name=" + cls, "_self");
 		}
+	},
+	importClass:function()
+	{
+    	$('#file_imp_form').unbind('submit');
+    	$('#file_imp_form').unbind("change");
+    	$('#file_imp_form').submit(function(event){
+    		event.preventDefault();
+			var formData = new FormData($(this)[0]);
+			$.ajax({
+				url: '/ffvm/load_source',
+				type: 'POST',
+				data: formData,
+				async: false,
+				cache: false,
+				contentType: false,
+				processData: false,
+				success: function (returndata) {
+				 	if(returndata.result == 1)
+				 		w2ui.cls_sidebar.reload();
+				 	else
+				 		w2alert(returndata.msg);
+				}
+			});
+			return false;
+    	});
+    	$('#st_src').on("change",function(){
+    		//console.log("change in file");
+			$('#file_imp_form').trigger('submit');
+			return false;
+    	});
+    	$('#st_src').trigger('click');
 	}
 }
 function remove_all_nodes_of(sidebar)

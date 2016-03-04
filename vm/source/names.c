@@ -116,7 +116,8 @@ char *str;
     if (hash < 0)
 	hash = -hash;
     /* make sure it can be a smalltalk integer */
-    if (hash > 16384)
+	// 2^30
+    if (hash > 1073741824)
 	hash >>= 2;
     return hash;
 }

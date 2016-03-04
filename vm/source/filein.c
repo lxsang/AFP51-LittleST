@@ -44,10 +44,16 @@ static object findClass(name)
 char *name;
 {
     object newobj;
-
+	// find the classes
+	object classes = globalSymbol("classes");
     newobj = globalSymbol(name);
     if (newobj == nilobj)
-	newobj = newClass(name);
+	{
+		newobj = newClass(name);
+	    /* now put in global class table if exist */
+		if(classes != nilobj)
+	    	nameTableInsert(classes, strHash(name),globalKey(name), newobj);
+	}
     if (basicAt(newobj, sizeInClass) == nilobj) {
 	basicAtPut(newobj, sizeInClass, newInteger(0));
     }
@@ -115,6 +121,7 @@ boolean printit;
     }
 
     /* now go read the methods */
+	lineBuffer[0] = ' ';
     do {
 	if (lineBuffer[0] == '|')	/* get any left over text */
 	    strcpy(textBuffer, &lineBuffer[1]);

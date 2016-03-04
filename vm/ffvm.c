@@ -8,7 +8,7 @@
 #include "source/env.h"
 #include "source/memory.h"
 #include "source/names.h"
-
+#define MAXSIZE 500000
 pthread_mutex_t exec_mux;
 
 int initial = 0;		/* not making initial image */
@@ -22,11 +22,17 @@ object create_process(const char* code)
     object process, stack, method, processClass;
     method = newMethod();
     setInstanceVariables(nilobj);
-    ignore parse(method, code, false);
+	if (parse(method, code, false) == false)
+	{
+		parse(method,
+			"x ^ (smalltalk error:'compiler error: syntax error. Please check')",
+			false);
+	}
 	/*must check if the parse method success or not to
 	continue the execution, this will avoid the segment
 	fault error*/
     process = allocObject(processSize);
+	incr(process);
     stack = allocObject(50);
 	setClass(stack, globalSymbol("Array"));
 	// find the sheduler
@@ -46,7 +52,7 @@ object create_process(const char* code)
     basicAtPut(stack, 6, newInteger(1));	/* byte offset */
 	return process;
 }
-object schedulerRun (char* text)
+void schedulerRun (char* text)
 {
     object process, scheduler;
 	process = create_process(text);
@@ -73,15 +79,16 @@ object schedulerRun (char* text)
 }
 object goDoIt(const char* code)
 {
+	LOG("Query %s \n",code);
 	object process = create_process(code);
 	while (vm_execute(process, 5000));
 	//decr(process);
-	return basicAt(basicAt(process, stackInProcess),1);
+	return process;
 }
 void init()
 {
 	FILE *fp; 
-	char* path = __s("%s/%s",__plugin__.pdir,"image.im");
+	char* path = __s("%s/%s",config_dir(),"image.im");
     fp = fopen(path,"r");
     
 	if (fp == NULL) {
@@ -95,14 +102,9 @@ void init()
     //dumpInitialiseImage();
     //stdin <- File new; name: 'stdin'; mode: 'r'; open. \
     // create process and execute it
-	goDoIt("webGlobal \
-			stderr <- File new; name: 'stdout'; mode: 'w'; open. \
-			stdout <- File new; name: 'stdout'; mode: 'w'; open. \
-        	sysTmp <- ''. \
-			scheduler <- Scheduler new.\
-    		imgMeta <- ImageManager new.\
-			webProcess <- [scheduler runOne] newProcess.");
+	decr(goDoIt("x nil webGlobal"));
     LOG("%s","Finish load image\n");
+	free(path);
 }
 void pexit()
 {
@@ -140,12 +142,19 @@ char* load_string(object objptr)
 }
 char* result_string_of(const char* code)
 {	
-	printf("Query %s\n", code);
-	object result = goDoIt(code);
+	//printf("Query %s\n", code);
+	char * data;
+	object process = goDoIt(code);
+	object result = basicAt(basicAt(process, stackInProcess),1);
 	if(result == nilobj) 
-		return "{}";
+		data = "{}";
 	else
-		return strdup(load_string(result));
+	{
+		data = strdup(load_string(result));
+	}
+	decr(process);
+	printf("object count %d\n", objectCount());
+	return data;
 }
 /**
  * execute : load default browser
@@ -162,7 +171,7 @@ void execute(int client,const char* method,dictionary rq)
 void editor_ac(int client,const char* method,dictionary rq)
 { 
 	json(client);
-	char* file = __s("%s/img.kw",__plugin__.pdir);
+	char* file = __s("%s/img.kw",config_dir());
 	__f(client,file);
 	free(file);
 }
@@ -173,8 +182,8 @@ void classinfo(int client,const char* method,dictionary rq)
 
 	if(IS_POST(method))
 	{
-		char* methods;
-		char* variables;
+		char* methods = NULL;
+		char* variables = NULL;
 		
 		char* code = __s("x ^(imgMeta allMethodsOf:%s)",
 						R_STR(rq,"class"));
@@ -185,6 +194,11 @@ void classinfo(int client,const char* method,dictionary rq)
 		variables = result_string_of(code);
 		
 		__t(client,"[%s,%s]", methods,variables);
+		free(code);
+		if(methods)
+			free(methods);
+		//if(variables)
+		//	free(variables);
 		return;
 	}
 	__t(client,"{}");
@@ -201,6 +215,7 @@ void new_method(int client,const char* method,dictionary rq)
         // create the method
         code = __s("x ^(imgMeta addMethodTo:%s)",R_STR(rq,"class"));
 		__t(client,"%s",result_string_of(code));
+		free(code);
 		return;
 	}
 	__t(client,"{}");
@@ -213,9 +228,10 @@ void save_image(int client,const char* method,dictionary rq)
 		char* name = R_STR(rq,"name");
 		if(!name) name = "backup";
 		//printf("%s\n", );
-		char* code = __s("x smalltalk saveImage:'%s/../plugins/%s'",__plugin__.htdocs, name);
-		ignore goDoIt(code);
+		char* code = __s("x smalltalk saveImage:'%s/%s'",config_dir(), name);
+		decr(goDoIt(code));
 		__t(client,"{\"result\":1}");
+		free(code);
 		return;
 	}
 	__t(client,"{}");
@@ -233,6 +249,7 @@ void update_method(int client,const char* method,dictionary rq)
 		code = __s("x ^(imgMeta editMethod:#%s of:%s)",
                          R_STR(rq,"method"),R_STR(rq,"class"));
 		__t(client,"%s",result_string_of(code));
+		free(code);
 		return;
 	}
 	__t(client,"{}");
@@ -246,6 +263,7 @@ void methods_of(int client,const char* method,dictionary rq)
 		char* code = __s("x ^(imgMeta allMethodsOf:%s)",
 					R_STR(rq,"class"));
 		__t(client,result_string_of(code));
+		free(code);
 		return;
 	}
 	__t(client,"{}");
@@ -259,6 +277,7 @@ void variables_of(int client,const char* method,dictionary rq)
 		char* code = __s("x ^(imgMeta variablesOf:%s)",
 				R_STR(rq,"class"));
 		__t(client,result_string_of(code));
+		free(code);
 		return;
 	}
 	__t(client,"{}");
@@ -270,13 +289,14 @@ void new_class(int client,const char* method,dictionary rq)
 	{
 		char* code = __s("x ^(%s)",R_STR(rq,"code"));
 		char* class = R_STR(rq,"class");
-		ignore goDoIt(code);
+		decr(goDoIt(code));// this should be fixed
 		object result = globalSymbol(class);
 		if(result == nilobj) 
 			__t(client,"{\"result\":0,\"msg\":\"Error when create Class %s\"}",class);
 		else
 			__t(client,"{\"result\":1,\"msg\":\"OK\"}");
 		printf("Query %s\n", code);
+		free(code);
 		return;
 	}
 	__t(client,"{'result':-1}");
@@ -289,6 +309,7 @@ void source(int client,const char* method,dictionary rq)
 	{
 		char* code = __s("x ^(imgMeta sourceOf:'%s' in:%s)",R_STR(rq,"method"),R_STR(rq,"class"));
 		__t(client,result_string_of(code));
+		free(code);
 		return;
 	}
 	__t(client,"");
@@ -303,9 +324,10 @@ void exp_class(int client, const char* method, dictionary rq)
 			char * file = __s("%s/../tmp/%s.st", __plugin__.htdocs, name);
 			char * code = __s("x ^(imgMeta exportClass:%s to:'%s')",
 							name,file);
-			ignore goDoIt(code);
+			decr(goDoIt(code));
 			octstream(client,__s("%s.st",name));
 			__f(client, file);
+			free(code);
 			return;
 		}
 		html(client);
@@ -320,22 +342,23 @@ void get_image(int client, const char* method, dictionary rq)
 	char* name = __s("backup_%ul", time(NULL));
 	char * file = __s("%s/../tmp/%s", __plugin__.htdocs, name);
 	char* code = __s("x smalltalk saveImage:'%s'",file);
-	ignore goDoIt(code);
+	decr(goDoIt(code));
 	octstream(client,"FireflySTImage.im");
 	__fb(client,file);
+	free(code);
 }
 void kwdump(int client, const char* method, dictionary rq)
 {
-	char * file = __s("%s/img.kw", __plugin__.pdir);
+	char * file = __s("%s/img.kw", config_dir());
 	char* code = __s("x imgMeta imageKeywords:'%s'",file);
-	ignore goDoIt(code);
+	decr(goDoIt(code));
 	json(client);
 	__t(client,"{\"result\":1,\"msg\":\"OK\"}");
 }
 void scriptbin(int client, const char* method, dictionary rq)
 {
 	FILE* fp;
-	char* file = __s("%s/scriptbin.json",__plugin__.pdir);
+	char* file = __s("%s/scriptbin.json",config_dir());
 	json(client);
 	if(IS_POST(method))
 	{
@@ -385,13 +408,10 @@ int tty_read_buf(int fd, char*buf,int size)
 	buf[i] = '\0';
 	return i;
 }
-void webtty(int client, const char* m, dictionary rq)
+void stdout_to_socket(int client,const char* code)
 {
 	textstream(client);
 	int filedes[2];
-	char* code = R_STR(rq, "code");
-	if(!code) return;
-	char* query = __s("x %s",code);
 	if(pipe(filedes) == -1)
 	{
 		perror("pipe");
@@ -409,7 +429,7 @@ void webtty(int client, const char* m, dictionary rq)
 	     close(filedes[0]);
 	    // execute Smalltalk code, and redirect ouput to socket
 		 pthread_mutex_lock (&exec_mux);
-		 ignore schedulerRun(query);
+		 ignore schedulerRun(code);
 		 pthread_mutex_unlock (&exec_mux);
 	    // perror("execl");
 	     _exit(1);
@@ -428,13 +448,87 @@ void webtty(int client, const char* m, dictionary rq)
 		} else if (count == 0) {
 			break;
 		} else {
-			__t(client,"data:%s\n",buffer);
+			__t(client,"data:%s\n\n",buffer);
 			//handle_child_process_output(buffer, count);
 		}
 	}
 	close(filedes[0]);
 	wait(0);
-	free(code);
+	//free(code);
+}
+void webtty(int client, const char* m, dictionary rq)
+{
+	int filedes[2];
+	char* code = R_STR(rq, "code");
+	if(!code) return;
+	char* query = __s("x %s",code);
+	stdout_to_socket(client,query);
+	//free(code);
 	free(query);
 	printf("Child process exit\n");
+}
+void load_source(int c, const char* m, dictionary rq)
+{
+	json(c);
+	char* path = NULL;
+	if(IS_GET(m))
+	{
+		__t(c,__RESULT__,0,"Bad request:GET");
+		return;
+	}
+	if(R_STR(rq,"st_src.file") == NULL || R_INT(rq,"st_src.size") > MAXSIZE)
+	{
+		__t(c,__RESULT__,0,"File not found or too large");
+		return;
+	}
+	path = R_STR(rq,"st_src.tmp");
+	char* src = __s("x <120 1 '%s' 'r'>. <123 1>. <121 1>", path);
+	//printf("%s\n", src);
+	decr(goDoIt(src));
+	__t(c,__RESULT__,1,"OK");
+	free(src);
+}
+void node_status(int c, const char* m, dictionary rq)
+{
+	json(c);
+	__t(c,__RESULT__,1,"I'm online, there will be more here lately");
+}
+void portal(int c, const char* m, dictionary rq)
+{
+	
+	char* code = R_STR(rq,"code");
+	char* query = NULL;
+	char* file = NULL;
+	int streaming = R_INT(rq,"streaming");
+	//printf("%s %d\n", code, streaming);
+	switch(streaming)
+	{
+		case 0: // roundtrip request
+			json(c);
+			query  = __s("x ^ (imgMeta %s) asJSON",code);
+			__t(c,"%s", result_string_of(query));
+		case 1:// stream request
+			query = __s("x (imgMeta %s)",code);
+			stdout_to_socket(c,query);
+			printf("Child process exit\n");
+			break;
+		case 2: // roundtrip request with file attached
+			json(c);
+			if(R_STR(rq,"xware.file") == NULL)
+				__t(c,"%s","File not found.");
+			else if(R_INT(rq,"xware.size") > MAXSIZE )
+				__t(c,"%s","File is too large.");
+			else
+			{
+				query  = __s("x ^ (imgMeta %s) asJSON",code);
+				file = R_STR(rq,"xware.tmp");
+				create_tmp_str(file);
+				__t(c,"%s", result_string_of(query));
+				free(file);
+			}
+			break;
+		default: break;
+	}
+	if(query)
+		free(query);
 }

@@ -7,7 +7,7 @@ year
 |
 
 new
-	^ (<153 0>)
+	^ (< 22 <153 0> (self class) >)
 
 |
 stamp

@@ -9,10 +9,11 @@ object new_date()
 	struct tm * timeinfo; 
 	stamp = (unsigned) time (&ti);
 	timeinfo = localtime (&ti);
+	char buf[64];
 	// create new date object and add value to its 
 	// instance variables
 	object newObj = allocObject(OBJ_SIZE);
-	setClass(newObj, globalSymbol("Date"));
+	//setClass(newObj, globalSymbol("Date"));
 	basicAtPut(newObj,1,newInteger(timeinfo->tm_mday));
 	basicAtPut(newObj,2,newInteger(timeinfo->tm_mon+1));
 	basicAtPut(newObj,3,newInteger(timeinfo->tm_year+1900));
@@ -22,7 +23,9 @@ object new_date()
 	//printf("%d\n",stamp);
 	// BUG
 	//TODO: integer overflow, must convert it to LongInteger
-	basicAtPut(newObj,7,newInteger(stamp));
+	//basicAtPut(newObj,7,newInteger(stamp));
+	sprintf(buf,"%d", stamp);
+	basicAtPut(newObj,7,newStString(buf));
 	return newObj;
 }
 

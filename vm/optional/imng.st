@@ -90,5 +90,27 @@ Methods ImageManager 'all'
 	    ].
 	    f print:']'.
 	    f close.
-
+|
+	remoteInitObjectOf:aClass id:anID |key val|
+		aClass isNil ifTrue:[^false].
+		key <- aClass asString.
+		val <- gwId at:key ifAbsent:[^ false].
+		val = anID ifFalse:[^false].
+		sysPortal class = aClass ifTrue:[^true].
+		sysPortal <- aClass new.
+		^true
+|
+	remoteExecute:code
+		^(('sysPortal ',code) value) 
+|
+	loadGateware
+		"this need to be fixed to make it more independent"
+		sysTmp isNil ifTrue:[^ false ].
+		^ (<152 12 sysTmp '/root/kernels/obtrkn.ko'>) 
+|
+	loadSource:id class:name
+		sysTmp isNil ifTrue:[^ false ].
+		<120 1 sysTmp 'r'>. <123 1>. <121 1>.
+		name isNil ifFalse:[gwId at:name put:id].
+		^ true 
 ]

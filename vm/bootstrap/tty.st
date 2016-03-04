@@ -94,7 +94,10 @@ Methods Smalltalk 'doit'
 	error: aString
 		" print a message, and remove current process "
 		stderr print: aString.
-		scheduler currentProcess; trace; terminate.
+		scheduler currentProcess isNil ifFalse:[
+			scheduler currentProcess; trace; terminate
+		].
+		^ aString
 ]
 Methods Scheduler 'get commands'
 	initialize	| string |

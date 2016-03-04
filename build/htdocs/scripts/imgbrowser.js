@@ -61,9 +61,17 @@ var config = {
                             { id:'new_cls', text: 'New class', icon: 'fa-plus' }, 
                             { text: 'Edit class', icon: 'fa-pencil' }, 
                             { text: 'Delete class', icon: 'fa-trash' },
-							{ id:'exp_cls',text: 'Export class', icon: 'fa-external-link' }
+							{ id:'exp_cls',text: 'Export class', icon: 'fa-external-link' },
+							{ id:'imp_cls',text: 'Import class', icon: 'fa-sign-in' }
                         ]},
-                        { type: 'button',  id: 'clsbr_ref',  caption: '', icon: 'fa-refresh'}
+                        { type: 'button',  id: 'clsbr_ref',  caption: '', icon: 'fa-refresh'},
+			        	{
+			        		type: 'html', 
+			        		id: 'file_select', 
+			        		html: '<form id="file_imp_form" action="javascript:;" style="display:none;">'
+			        			+'<input id="st_src" type="file" name="st_src" />'
+			        			+'</form>'
+			        	},
                     ],
                     onClick: function (event) {
                        // this.owner.content('main', event);
@@ -74,6 +82,9 @@ var config = {
                        			break;
 							case 'cls_ed:exp_cls':
 								sclbrr_config.exportClass();
+								break;
+							case 'cls_ed:imp_cls':
+								sclbrr_config.importClass();
 								break;
                        		case 'clsbr_ref':
                        		sclbrr_config.reload();
