@@ -18,11 +18,12 @@ object dev_open(const char* path, int size)
     	return nilobj;
 	}
 	// close the file
-	if(close(devf) == -1)
+	/*if(close(devf) == -1)
 	{
 		printf("Cant close the file: %s\n",path);
-		//return nilobj;
-	}
+		return nilobj;
+	}*/
+	//printf("%p\n",ptr );
 	object arr = newArray(2);
 	basicAtPut(arr,1,newInteger(devf));
 	basicAtPut(arr,2,newPointer(ptr));
@@ -38,7 +39,7 @@ object dev_map(object idx,int size)
 	{
 		object re = allocObject(0);
 		sizeField(re) = -size;
-		
+		//printf("%p \n", ptr);
 		objectTable[re>>1].memory = (object*)ptr;
 		setClass(re,globalSymbol("ByteArray"));
 		
@@ -49,20 +50,22 @@ object dev_map(object idx,int size)
 }
 void dev_close(object idx, object ref, int devf)
 {
-	int size = objectTable[ref>>1].size;
-	objectTable[ref>>1].memory = NULL;
-	objectTable[ref>>1].size = 0;
+	int size = - objectTable[ref>>1].size;
 	unsigned char* ptr = (unsigned char*) sysMemPtr(idx);
-	/*if(close(devf) == -1)
-	{
-		printf("Cant close the file\n");
-	}*/
+	//printf("%p \n", ptr);
 	if(ptr)
 	{
-		munmap(ptr, size);
+		if(munmap(ptr, size) == -1)
+			perror("Cannot unmap the memory\n");
 		ptr = NULL;
+		if(close(devf) == -1)
+		{
+			printf("Cant close the file\n");
+		}
 		//sysdevs[idx] = NULL;
 	}
+	objectTable[ref>>1].memory = NULL;
+	objectTable[ref>>1].size = 0;
 }
 object  dev_read_data16(object idx, int offset)
 {

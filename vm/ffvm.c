@@ -506,7 +506,9 @@ void portal(int c, const char* m, dictionary rq)
 		case 0: // roundtrip request
 			json(c);
 			query  = __s("x ^ (imgMeta %s) asJSON",code);
-			__t(c,"%s", result_string_of(query));
+			__t(c, result_string_of(query));
+			//wait for all data to be received
+			//decr(goDoIt("x 100 milliseconds wait"));
 			break;
 		case 1:// stream request
 			query = __s("x (imgMeta %s)",code);

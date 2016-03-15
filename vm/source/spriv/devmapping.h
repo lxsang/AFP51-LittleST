@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdint.h>
-
+#include <errno.h>
 #include "../env.h"
 #include "../memory.h"
 #include "../names.h"

@@ -69,4 +69,7 @@ Methods UndefinedObject 'all'
 		sysPortal <- nil.
 		gwId <- Dictionary new.
 		webProcess <- [scheduler runOne] newProcess.
+|
+	dataAsJSON
+		^ 'nil'
 ]
