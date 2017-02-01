@@ -18,7 +18,9 @@
 #include "memory.h"
 #include "names.h"
 #include "interp.h"
-
+#define BRANCH_LOC (nextByte() | (nextByte() << 8))
+#define BRANCH_SIZE 2
+//#define BRANCH_LOC (nextByte());
 void sysDecr(object z);
 void flushCache(object messageToSend, object class);
 object hashEachElement(object dict, register int hash, int (*fun) ());
@@ -143,7 +145,7 @@ int maxsteps;
     int high;
     register object incrobj;	/* speed up increments and decrements */
     byte *bp;
-
+	int jmp_need = 0;
     /* unpack the instance variables from the process */
     processStack = basicAt(aProcess, stackInProcess);
     psb = sysMemPtr(processStack);
@@ -209,37 +211,20 @@ int maxsteps;
 	    case 0:
 	    case 1:
 	    case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
 		ipush(newInteger(low));
 		break;
 
 	    case minusOne:
 		ipush(newInteger(-1));
 		break;
-
-	    case contextConst:
-		/* check to see if we have made a block context yet */
-		if (contextObject == processStack) {
-		    /* not yet, do it now - first get real return point */
-		    returnPoint =
-			intValue(processStackAt(linkPointer + 2));
-		    contextObject =
-			newContext(linkPointer, method,
-				   copyFrom(processStack, returnPoint,
-					    linkPointer - returnPoint),
-				   copyFrom(processStack, linkPointer + 5,
-					    methodTempSize(method)));
-		    basicAtPut(processStack, linkPointer + 1,
-			       contextObject);
-		    ipush(contextObject);
-		    /* save byte pointer then restore things properly */
-		    fieldAtPut(processStack, linkPointer + 4,
-			       newInteger(byteOffset));
-		    goto readLinkageBlock;
-
-		}
-		ipush(contextObject);
-		break;
-
+		
 	    case nilConst:
 		ipush(nilobj);
 		break;
@@ -309,7 +294,6 @@ int maxsteps;
 		    /* try again - if fail really give up */
 		    if (!findMethod(&methodClass)) {
 				sysWarn("can't find", "error recovery method");
-			
 			/* just quit */
 			return false;
 		    }
@@ -411,7 +395,48 @@ int maxsteps;
 	    returnPoint = processStackTop() - 1;
 	    messageToSend = binSyms[low];
 	    goto doSendMessage;
-
+		break;
+	case pushBlock:
+	/*push block, 
+		low is temporary location in the context
+	*/
+		//int upper, lower;
+		//upper = low >> 4;// temporary location
+		//lower = low &  0x0F; // temporary count
+		// figure contextObject FIXME: redundance code
+		//jmp_need= 0;
+		if (contextObject == processStack) {
+		    returnPoint =
+			intValue(processStackAt(linkPointer + 2));
+		    contextObject =
+			newContext(linkPointer, method,
+				   copyFrom(processStack, returnPoint,
+					    linkPointer - returnPoint),
+				   copyFrom(processStack, linkPointer + 5,
+					    methodTempSize(method)));
+		    basicAtPut(processStack, linkPointer + 1,
+			       contextObject);
+		    fieldAtPut(processStack, linkPointer + 4,
+			       newInteger(byteOffset));
+				   //jmp_need = 1;
+		}
+		returnedObject = newBlock();
+		basicAtPut(returnedObject, 1, contextObject);
+		//printf("%d\n",low &  0x0F );
+		//printf("%d\n",(low >> 4)+1);
+		basicAtPut(returnedObject, 2, newInteger(low &  0x0F));
+		basicAtPut(returnedObject, 3, newInteger((low >> 4)+1));
+		basicAtPut(returnedObject, 4, newInteger(byteOffset + BRANCH_SIZE));
+		//printf("Byte pointer %d\n",byteOffset + BRANCH_SIZE);
+		ipush(returnedObject);
+		/*if(jmp_need) {
+			//printf("Goto the zoo\n");
+			goto readLinkageBlock;
+		}
+		else
+		*/
+		byteOffset = BRANCH_LOC;
+		break;
 	case DoPrimitive:
 	    /* low gives number of arguments */
 	    /* next byte is primitive number */
@@ -494,6 +519,19 @@ int maxsteps;
 	    case StackReturn:
 		ipop(returnedObject);
 		goto doReturn;
+		
+		case BlokReturn:
+		ipop(returnedObject);
+		// then creating context pointer 
+		if(contextObject != processStack)
+		{
+			j = intValue(basicAt(contextObject, 1));
+			// first change link pointer to that of creator 
+			fieldAtPut(processStack, linkPointer, basicAt(processStack, j));
+			// then change return point to that of creator 
+			fieldAtPut(processStack, linkPointer + 2, basicAt(processStack, j + 2));
+		}
+		goto doReturn;
 
 	    case Duplicate:
 		/* avoid possible subtle bug */
@@ -508,13 +546,17 @@ int maxsteps;
 
 	    case Branch:
 		/* avoid a subtle bug here */
-		i = nextByte();
+		/*next 2 bytes is branch location*/
+		i = BRANCH_LOC;
+		//printf("GOTO : %d\n",i );
 		byteOffset = i;
 		break;
 
 	    case BranchIfTrue:
 		ipop(returnedObject);
-		i = nextByte();
+		//i = nextByte();
+		i = BRANCH_LOC;
+		//printf("GOTO IF TRUE: %d\n",i );
 		if (returnedObject == trueobj) {
 		    /* leave nil on stack */
 		    pst++;
@@ -525,7 +567,9 @@ int maxsteps;
 
 	    case BranchIfFalse:
 		ipop(returnedObject);
-		i = nextByte();
+		//i = nextByte();
+		i = BRANCH_LOC;
+		//printf("GOTO IF FALSE: %d\n",i );
 		if (returnedObject == falseobj) {
 		    /* leave nil on stack */
 		    pst++;
@@ -536,7 +580,9 @@ int maxsteps;
 
 	    case AndBranch:
 		ipop(returnedObject);
-		i = nextByte();
+		//i = nextByte();
+		i = BRANCH_LOC;
+		//printf("GOTO AND: %d\n",i );
 		if (returnedObject == falseobj) {
 		    ipush(returnedObject);
 		    byteOffset = i;
@@ -546,7 +592,9 @@ int maxsteps;
 
 	    case OrBranch:
 		ipop(returnedObject);
-		i = nextByte();
+		//i = nextByte();
+		i = BRANCH_LOC;
+		//printf("GOTO OR: %d\n",i );
 		if (returnedObject == trueobj) {
 		    ipush(returnedObject);
 		    byteOffset = i;

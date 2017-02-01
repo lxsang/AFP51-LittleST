@@ -19,8 +19,10 @@ object priv(int number, object* parameter)
 		case 4: // ROS primitive
 			return rospriv(parameter);
 #endif
+		case 5: // REST primitive
+			return REST_priv(parameter);
 		default: 
-			sysError("Unknown primitive", "sysPrimitive");
+			printf("Unknown primitive %d %d\n", number, high_priv);
 			return nilobj;
 	}
 }

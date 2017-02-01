@@ -64,7 +64,16 @@ Methods Char 'all'
 		^ (self isAlphabetic) or: [ self isDigit ]
 |
 	isBlank
-		^ value = $   " blank char "
+		^ value = 32 or: [ value = 9 or: [ value = 10 ] ]
+|
+isNewLine
+	^ value = 10
+|
+isCr
+	^ value = 13
+|
+isEOF
+	^ value = 256
 |
 	isChar
 		^ true

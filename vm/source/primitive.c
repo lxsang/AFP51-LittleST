@@ -466,7 +466,9 @@ char *firstargument;
     case 3:			/* string as symbol */
 	returnedObject = newSymbol(firstargument);
 	break;
-
+	case 4:/*float value of string*/
+	returnedObject = newFloat(atof(firstargument));
+	break;
     case 7:			/* value of symbol */
 	returnedObject = globalSymbol(firstargument);
 	break;

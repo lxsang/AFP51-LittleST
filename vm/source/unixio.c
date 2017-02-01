@@ -60,7 +60,7 @@ noreturn imageRead(FILE * fp)
 	}
 	objectTable[i].size = size = dummyObject.ds;
 	if (size < 0)
-	    size = ((-size) + 1) / 2;
+	    size = ((-size) + 3) / 4;
 	if (size != 0) {
 	    objectTable[i].memory = mBlockAlloc((int) size);
 	    ignore fr(fp, (char *) objectTable[i].memory,
@@ -99,7 +99,7 @@ noreturn imageWrite(FILE * fp)
 	    dummyObject.ds = size = objectTable[i].size;
 	    fw(fp, (char *) &dummyObject, sizeof(dummyObject));
 	    if (size < 0)
-		size = ((-size) + 1) / 2;
+		size = ((-size) + 3) / 4;
 	    if (size != 0)
 		fw(fp, (char *) objectTable[i].memory,
 		   sizeof(object) * size);

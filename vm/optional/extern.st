@@ -5,6 +5,13 @@ Methods String 'all'
 |
 	dataAsJSON
 		^ '"',self,'"'
+|
+	asFloat
+		^ <84 self>
+]
+Methods Char 'all'
+	isSpaceOrNewLine
+		^ ( (value = 32) | (value = 10) | (value = 9))
 ]
 Methods Integer 'all'
 wait
@@ -58,6 +65,12 @@ Methods Array 'all'
 Methods Boolean 'all'
 	dataAsJSON
 		^ self asString
+|
+	| aBool
+		^ self or:[aBool]
+|
+	& aBool
+		^ self and:[aBool]
 ]
 Methods UndefinedObject 'all'
 	webGlobal 

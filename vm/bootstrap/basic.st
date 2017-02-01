@@ -260,6 +260,9 @@ Methods Object 'all'
 	~~ aValue
 		^ (self == aValue) not
 |
+	~= aValue
+		^ self ~~ aValue
+|
 	= aValue
 		^ self == aValue
 |

@@ -13,7 +13,10 @@ SERVER=	$(SERVER_BASE)/plugin_manager.o \
 		$(SERVER_BASE)/plugins/ini.o\
 		$(SERVER_BASE)/http_server.o\
 		$(SERVER_BASE)/plugins/dictionary.o\
-		$(SERVER_BASE)/plugins/utils.o
+		$(SERVER_BASE)/plugins/utils.o\
+		$(SERVER_BASE)/plugins/base64.o \
+		$(SERVER_BASE)/plugins/sha1.o \
+		$(SERVER_BASE)/plugins/ws.o 
 SERVERLIB=-lpthread -ldl
 
 main: httpd 

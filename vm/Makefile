@@ -1,7 +1,7 @@
 CC=gcc
 UNAME_S := $(shell uname -s)
 INC_ROS 	:= FALSE
-INC_REST	:= FALSE
+INC_REST	:= TRUE
 USE_DB 		:= FALSE
 ifeq ($(UNAME_S),Linux)
     PLUGINS_BASE=/root/workspace/ant-http/plugins
@@ -30,8 +30,12 @@ PLUGINS=ffvm.$(EXT)
  
 UTILS = 	$(PLUGINS_BASE)/dictionary.o \
 			$(PLUGINS_BASE)/list.o \
-			$(PLUGINS_BASE)/utils.o
-PLUGINSDEP = 	$(PLUGINS_BASE)/plugin.o \
+			$(PLUGINS_BASE)/utils.o \
+			$(PLUGINS_BASE)/base64.o \
+			$(PLUGINS_BASE)/ws.o \
+			$(PLUGINS_BASE)/sha1.o \
+			$(PLUGINS_BASE)/plugin.o 
+PLUGINSDEP = 	vmproxy.o\
 				$(DB_OBJ) \
 				$(UTILS)
 PLUGINLIBS = $(DB_LIB) 
@@ -62,8 +66,8 @@ ifeq ($(INC_ROS),FALSE)
 endif
 ifeq ($(INC_REST),TRUE)
 	REST_OBJ = 	source/spriv/restpriv.o 
-	REST_FLG = -D INC_REST
-	REST_CLS = 	 
+	REST_FLG = -DINC_REST
+	REST_CLS = 	 ../optional/RESTProxy.st
 endif
 ifeq ($(INC_REST),FALSE)
 	REST_OBJ = 
@@ -96,12 +100,14 @@ ST_BOOTSTRAP =  basic.st \
 				../optional/Pointer.st \
 				../optional/DeviceMapper.st \
 				../optional/Date.st \
+				../optional/JSONParser.st\
 				$(ROS_CLS) \
 				$(REST_CLS) \
 				../optional/APF51Mapper.st \
 				../optional/ODMapper.st \
 				../optional/SCMapper.st \
 				../optional/FRDBMapper.st \
+				../optional/parser.st \
 				../optional/RWTest.st
 				
 CFLAGS=-W -Wall -g -std=c99 -D DEBUG $(DB_FLG) $(ROS_FLG) $(REST_FLG) $(PF_FLAG)

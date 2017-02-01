@@ -40,6 +40,10 @@ Methods Array 'all'
 			ifFalse: [ smalltalk error: 
 				'illegal index to at:put: for array' ]
 |
+includes: aValue
+	self do: [ :element | element = aValue ifTrue: [ ^ true ]].
+	^ false
+|
 	binaryDo: aBlock
 		(1 to: self size) do:
 			[:i | aBlock value: i value: (self at: i) ]
@@ -224,6 +228,7 @@ Methods Dictionary 'all'
 	at: aKey ifAbsent: exceptionBlock	| hashPosition  link |
 
 		hashPosition <- self hash: aKey.
+		hashPosition print.
 		((hashTable at: hashPosition + 1) = aKey)
 			ifTrue: [ ^ hashTable at: hashPosition + 2].
 		link <- hashTable at: hashPosition + 3.
@@ -319,7 +324,7 @@ Methods IndexedCollection 'all'
 |
 	indexOf: aBlock
 		^ self indexOf: aBlock
-			ifAbsent: [ smalltalk error: 'index not found']
+			ifAbsent: [ nil]
 |
 	indexOf: aBlock ifAbsent: exceptionBlock
 		self binaryDo: [:i :x | (aBlock value: x)
@@ -508,6 +513,9 @@ Methods String 'all'
 			ifTrue: [ ^ super = value ]
 			ifFalse: [ ^ false ]
 |
+	+ aString
+		^self , aString
+|
 	< value
 		(value isKindOf: String)
 			ifTrue: [ ^ super < value ]
@@ -523,7 +531,11 @@ Methods String 'all'
 		^ self inject: 0 into: [:x :y | x * 10 + y digitValue ]
 |
 	basicAt: index
+		(index > self size) ifTrue:[^nil].
 		^  (super basicAt: index) asCharacter
+|
+at:index
+	^self at:index ifAbsent:[nil]
 |
 	basicAt: index put: aValue
 		(aValue isMemberOf: Char)

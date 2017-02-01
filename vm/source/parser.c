@@ -73,7 +73,6 @@ void compilError(char *selector, char *str1, char *str2);
 void parsePrimitive();
 void sysDecr(object z);
 
-
 void setInstanceVariables(aClass)
 object aClass;
 {
@@ -103,6 +102,18 @@ int value;
 	codeArray[codeTop++] = value;
 }
 
+void genVal(int value)
+{
+	//genCode(value);
+	genCode(value % 256);
+	genCode(value / 256);
+}
+void patchLoc(int loc, int value)
+{
+	//codeArray[loc] = value;
+	codeArray[loc] = value % 256;
+	codeArray[loc+1] = value/256;
+}
 void genInstruction(high, low)
 int high, low;
 {
@@ -130,7 +141,7 @@ int val;
 {
     if (val == -1)
 	genInstruction(PushConstant, minusOne);
-    else if ((val >= 0) && (val <= 2))
+    else if ((val >= 0) && (val <= 9))
 	genInstruction(PushConstant, val);
     else
 	genInstruction(PushLiteral, genLiteral(newInteger(val)));
@@ -184,7 +195,7 @@ char *name;
     if (!done)
 	for (i = 0; (!done) && glbsyms[i]; i++)
 	    if (streq(name, glbsyms[i])) {
-		genInstruction(PushConstant, i + 4);
+		genInstruction(PushConstant, i + 9);// changement in constant
 		done = true;
 	    }
 
@@ -452,8 +463,9 @@ boolean dopop;
     savebstat = blockstat;
     genInstruction(DoSpecial, instruction);
     location = codeTop;
-    genCode(0);
-    if (dopop)
+    //genCode(0);
+    genVal(0);
+	if (dopop)
 	genInstruction(DoSpecial, PopTop);
     ignore nextToken();
     if (streq(tokenString, "[")) {
@@ -468,7 +480,8 @@ boolean dopop;
 	ignore binaryContinuation(term());
 	genMessage(false, 0, newSymbol("value"));
     }
-    codeArray[location] = codeTop + 1;
+	// codeArray[location] = (codeTop + 1);
+	patchLoc(location, codeTop+1);
     blockstat = savebstat;
     return (location);
 }
@@ -486,13 +499,15 @@ boolean superReceiver;
 	if (streq(tokenString, "ifTrue:")) {
 	    i = optimizeBlock(BranchIfFalse, false);
 	    if (streq(tokenString, "ifFalse:")) {
-		codeArray[i] = codeTop + 3;
+		//codeArray[i] = codeTop + 3;
+		patchLoc(i, codeTop+4);
 		ignore optimizeBlock(Branch, true);
 	    }
 	} else if (streq(tokenString, "ifFalse:")) {
 	    i = optimizeBlock(BranchIfTrue, false);
 	    if (streq(tokenString, "ifTrue:")) {
-		codeArray[i] = codeTop + 3;
+		//codeArray[i] = codeTop + 3;
+		patchLoc(i, codeTop+4);
 		ignore optimizeBlock(Branch, true);
 	    }
 	} else if (streq(tokenString, "whileTrue:")) {
@@ -502,8 +517,10 @@ boolean superReceiver;
 	    i = optimizeBlock(BranchIfFalse, false);
 	    genInstruction(DoSpecial, PopTop);
 	    genInstruction(DoSpecial, Branch);
-	    genCode(j + 1);
-	    codeArray[i] = codeTop + 1;
+	    //genCode(j + 1);
+		genVal(j+1);
+	    //codeArray[i] = codeTop + 1;
+		patchLoc(i, codeTop+1);
 	    genInstruction(DoSpecial, PopTop);
 	} else if (streq(tokenString, "and:"))
 	    ignore optimizeBlock(AndBranch, false);
@@ -555,7 +572,7 @@ void expression()
     if (token == nameconst) {	/* possible assignment */
 	ignore strcpy(assignname, tokenString);
 	ignore nextToken();
-	if ((token == binary) && streq(tokenString, "<-")) {
+	if ((token == binary) && (streq(tokenString, "<-")||streq(tokenString, ":=")) ) {
 	    ignore nextToken();
 	    assignment(assignname);
 	} else {		/* not an assignment after all */
@@ -608,12 +625,14 @@ void statement()
 	ignore nextToken();
 	expression();
 	if (blockstat == InBlock) {
-	    /* change return point before returning */
-	    genInstruction(PushConstant, contextConst);
-	    genMessage(false, 0, newSymbol("blockReturn"));
-	    genInstruction(DoSpecial, PopTop);
-	}
-	genInstruction(DoSpecial, StackReturn);
+	    // change return point before returning 
+	    //genInstruction(PushConstant, contextConst);
+	    //genMessage(false, 0, newSymbol("blockReturn"));
+	    //genInstruction(DoSpecial, PopTop);
+		//genInstruction(DoSpecial, StackReturn);
+		 genInstruction(DoSpecial, BlokReturn);
+	} else
+		genInstruction(DoSpecial, StackReturn);
     } else {
 	expression();
     }
@@ -680,7 +699,7 @@ void block()
 			"by |");
 	ignore nextToken();
     }
-    newBlk = newBlock();
+    /*newBlk = newBlock();
     basicAtPut(newBlk, argumentCountInBlock, newInteger(argumentCount));
     basicAtPut(newBlk, argumentLocationInBlock,
 	       newInteger(saveTemporary + 1));
@@ -688,11 +707,15 @@ void block()
     genInstruction(PushConstant, contextConst);
     genInstruction(DoPrimitive, 2);
     genCode(29);
-    genInstruction(DoSpecial, Branch);
+    genInstruction(DoSpecial, Branch);*/
+	 genInstruction(0, 12);// push block
+	 genInstruction(saveTemporary,argumentCount);
+	 //genInstruction(DoSpecial, Branch);
     fixLocation = codeTop;
-    genCode(0);
+    //genCode(0);
+	genVal(0);
     /*genInstruction(DoSpecial, PopTop); */
-    basicAtPut(newBlk, bytecountPositionInBlock, newInteger(codeTop + 1));
+    //basicAtPut(newBlk, bytecountPositionInBlock, newInteger(codeTop + 1));
     blockstat = InBlock;
     body();
     if ((token == closing) && streq(tokenString, "]"))
@@ -700,7 +723,8 @@ void block()
     else
     compilError(selector, "block not terminated by ]", "");
     genInstruction(DoSpecial, StackReturn);
-    codeArray[fixLocation] = codeTop + 1;
+	//codeArray[fixLocation] = (codeTop + 1);
+	patchLoc(fixLocation, codeTop+1);
     temporaryTop = saveTemporary;
     blockstat = savebstat;
 }
@@ -821,6 +845,12 @@ boolean savetext;
 	if (savetext) {
 	    basicAtPut(method, textInMethod, newStString(text));
 	}
+	/*else
+	{
+		for (i = 0; i < codeTop; i++) {
+		   printf("%d: [%d %d] \n",codeArray[i],codeArray[i] >> 4, codeArray[i] & 0x0F);
+		}
+	}*/
 	return (true);
     }
     return (false);
